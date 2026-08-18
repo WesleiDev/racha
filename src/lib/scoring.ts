@@ -120,7 +120,9 @@ export function boardFromSets(config: MatchConfig, sets: number[][], numTeams = 
 /** estado do placar de uma partida, tenha ela sido marcada ao vivo ou anotada depois */
 export function boardOf(match: Match): BoardState {
   if (match.manualSets && match.manualSets.length > 0) {
-    return boardFromSets(match.config, match.manualSets, match.teams.length)
+    // aceita também o formato antigo ([25,18]) de dados salvos antes da correção
+    const sets = match.manualSets.map((s) => (Array.isArray(s) ? (s as number[]) : [s.a, s.b]))
+    return boardFromSets(match.config, sets, match.teams.length)
   }
   return computeBoard(match.config, match.events, match.serveStart, match.teams.length)
 }

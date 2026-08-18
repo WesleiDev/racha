@@ -49,7 +49,7 @@ export function Scoreboard() {
     void playVictory()
     const t = setTimeout(() => {
       const done = finish()
-      if (done) void saveMatch(done)
+      if (done) void saveMatch(done).catch((e) => console.error('[salvar partida]', e))
       nav(`/g/${groupId}/resumo/${match.id}`, { replace: true })
     }, 900)
     return () => clearTimeout(t)
@@ -89,7 +89,7 @@ export function Scoreboard() {
 
   const endMatch = () => {
     const done = finish()
-    if (done) void saveMatch(done)
+    if (done) void saveMatch(done).catch((e) => console.error('[salvar partida]', e))
     nav(`/g/${groupId}/resumo/${match.id}`, { replace: true })
   }
 

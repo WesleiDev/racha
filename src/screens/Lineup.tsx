@@ -242,7 +242,7 @@ export function Lineup() {
   const play = (i: number, j: number) => {
     ensureCtx()
     const game = startGame(session, [i, j])
-    void saveMatch(game)
+    void saveMatch(game).catch((e) => console.error('[salvar partida]', e))
     setPicking(false)
     nav(`/g/${groupId}/placar`, { replace: true })
   }
@@ -409,10 +409,17 @@ export function Lineup() {
           onCancel={() => setNoting(false)}
           onSave={async (idx, sets) => {
             const game = buildManualGame(session, idx, sets)
-            await saveMatch(game)
-            setNoting(false)
-            setMsg('Resultado anotado!')
-            setTimeout(() => setMsg(null), 3000)
+            try {
+              await saveMatch(game)
+              setNoting(false)
+              setMsg('Resultado anotado!')
+            } catch (e) {
+              console.error('[anotar resultado]', e)
+              await deleteMatch(game.id).catch(() => {})
+              setNoting(false)
+              setMsg('Não deu pra salvar. Confere a internet e tenta de novo.')
+            }
+            setTimeout(() => setMsg(null), 4000)
           }}
         />
       </Sheet>

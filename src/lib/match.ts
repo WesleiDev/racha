@@ -47,7 +47,8 @@ export function buildManualGame(session: Match, teamIdx: [number, number], sets:
     ...base,
     sessionId: session.id,
     players: session.players,
-    manualSets: sets,
+    // objeto por set: o Firestore rejeita array dentro de array
+    manualSets: sets.map(([a, b]) => ({ a, b })),
     finishedAt: Date.now(),
   }
 }

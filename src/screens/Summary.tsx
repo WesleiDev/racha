@@ -80,7 +80,7 @@ export function Summary() {
 
   const setMvp = (pid: string | undefined) => {
     const updated = { ...match, mvpPlayerId: pid }
-    void saveMatch(updated)
+    void saveMatch(updated).catch((e) => console.error('[salvar partida]', e))
     if (live.match?.id === match.id) live.setMvp(pid)
   }
 

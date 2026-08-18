@@ -69,6 +69,12 @@ export interface Team {
   sound: TeamSound
 }
 
+/** parcial de um set anotado na mão: a = time 0, b = time 1 */
+export interface ManualSet {
+  a: number
+  b: number
+}
+
 export type MatchEvent =
   | { type: 'point'; team: number; ts: number }
   | { type: 'set-close'; ts: number }
@@ -88,8 +94,11 @@ export interface Match {
    * Placar digitado depois, sem ter usado o placar ao vivo.
    * Fica em campo próprio de propósito: inventar eventos falsos faria a
    * "corrida do placar" mentir. Quando existe, manda no lugar dos eventos.
+   *
+   * Formato de objeto ({a,b} = times 0 e 1) porque o Firestore NÃO aceita
+   * array dentro de array — `number[][]` quebra o setDoc.
    */
-  manualSets?: number[][]
+  manualSets?: ManualSet[]
   /** quando a escalação foi salva; vira a hora do apito quando o jogo começa */
   startedAt: number
   finishedAt?: number
