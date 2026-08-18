@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { IconBack } from './icons'
 
@@ -57,12 +57,31 @@ export function Header({
   )
 }
 
-/** rodapé fixo com CTA */
+/**
+ * Rodapé fixo com CTA. O espaçador acompanha a altura real da barra —
+ * com altura fixa, uma barra de dois botões escondia o fim do conteúdo.
+ */
 export function BottomBar({ children }: { children: ReactNode }) {
+  const bar = useRef<HTMLDivElement>(null)
+  const [height, setHeight] = useState(110)
+
+  useEffect(() => {
+    const el = bar.current
+    if (!el) return
+    const update = () => setHeight(el.offsetHeight)
+    update()
+    const ro = new ResizeObserver(update)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   return (
     <>
-      <div className="h-[110px]" />
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[448px] bg-paper/95 backdrop-blur-[10px] border-t border-cardline px-5 pt-3 pb-[max(26px,env(safe-area-inset-bottom))] z-40">
+      <div style={{ height: height + 12 }} />
+      <div
+        ref={bar}
+        className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[448px] bg-paper/95 backdrop-blur-[10px] border-t border-cardline px-5 pt-3 pb-[max(26px,env(safe-area-inset-bottom))] z-40"
+      >
         {children}
       </div>
     </>

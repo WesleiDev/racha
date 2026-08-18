@@ -135,6 +135,18 @@ export function Groups() {
             Entrar por link
           </Button>
         </div>
+
+        <div className="text-[12.5px] text-ter text-center mt-6 mb-2">
+          Feito com <span className="text-danger">❤️</span> por{' '}
+          <a
+            href="https://www.linkedin.com/in/dev-ferreira/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-bold text-accent underline decoration-accent/30 underline-offset-2"
+          >
+            Ferreira
+          </a>
+        </div>
       </Content>
 
       {/* criar grupo */}
