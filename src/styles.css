@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+@theme {
+  /* ---- superfícies claras ---- */
+  --color-page: #E8E6E0;
+  --color-paper: #F7F6F3;
+  --color-card: #FFFFFF;
+  --color-subtle: #FAF9F6;
+  --color-field: #EFEDE7;
+  --color-cardline: #E6E4DE;
+  --color-strong: #D6D3CA;
+
+  /* ---- texto ---- */
+  --color-ink: #15141A;
+  --color-sec: #57545F;
+  --color-ter: #6E6B7B;
+  --color-dis: #9A97A5;
+  --color-knob: #C9C6D2;
+  --color-knob2: #DFDCD4;
+
+  /* ---- marca e sinal ---- */
+  --color-accent: #7C4DFF;
+  --color-accent-press: #5A28E8;
+  --color-accent-soft: #F4F1FF;
+  --color-accent-line: #C9C4E8;
+  --color-lime: #D6FF3F;
+  --color-success: #00A86B;
+  --color-success-soft: #EAFBF2;
+  --color-success-ink: #00714A;
+  --color-warn: #FFC93C;
+  --color-danger: #F2352C;
+  --color-danger-soft: #FF8A82;
+  --color-gold: #FFB300;
+  --color-gold-pale: #FFE3A6;
+  --color-notice: #FFF4E5;
+  --color-notice-ink: #B45309;
+  --color-bronze: #C08457;
+
+  /* ---- superfícies escuras ---- */
+  --color-board: #0B0A0F;
+  --color-dark: #15141A;
+  --color-dark-elev: #2A2833;
+  --color-ondark: #A9A5B8;
+  --color-ondark-ter: #8C889B;
+  --color-ondark-ter2: #7E7A90;
+  --color-ondark-dim: #6E6B7B;
+  --color-ondark-faint: #4E4B59;
+
+  /* ---- tipografia ---- */
+  --font-sans: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-num: "Archivo", "Bricolage Grotesque", ui-sans-serif, sans-serif;
+
+  /* ---- animações ---- */
+  --animate-racha-fall: rachaFall 3.2s linear infinite;
+  --animate-racha-pulse: rachaPulse 1.5s ease-in-out infinite;
+
+  @keyframes rachaFall {
+    0% { transform: translateY(-40px) rotate(0deg); opacity: 0; }
+    12% { opacity: 1; }
+    100% { transform: translateY(300px) rotate(420deg); opacity: 0; }
+  }
+  @keyframes rachaPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.25; }
+  }
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-page);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+#root { min-height: 100dvh; }
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+::-webkit-scrollbar { width: 0; height: 0; }
+
+button { font-family: inherit; }
+input { font-family: inherit; }
+
+/* números de painel */
+.num {
+  font-family: var(--font-num);
+  font-variant-numeric: tabular-nums;
+}
+.num-112 { font-stretch: 112%; }
+.num-118 { font-stretch: 118%; }
+.num-125 { font-stretch: 125%; }
+
+/* pulso de escala na metade tocada do placar */
+@keyframes tapPulse {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+.tap-pulse { animation: tapPulse 0.16s ease-out; }
+
+@keyframes barBounce {
+  0% { transform: scaleY(0.3); }
+  100% { transform: scaleY(1); }
+}
+
+/* caret piscando do campo de nome */
+@keyframes caretBlink { 0%, 45% { opacity: 1; } 55%, 100% { opacity: 0; } }
+
+/* entrada de bottom sheet / modal */
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.sheet-up { animation: sheetUp 0.28s cubic-bezier(0.32, 0.72, 0, 1); }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.fade-in { animation: fadeIn 0.2s ease-out; }
+@keyframes popIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+.pop-in { animation: popIn 0.22s cubic-bezier(0.32, 0.72, 0, 1); }
+
+/* esconder área fora do app em telas grandes */
+.app-col {
+  max-width: 448px;
+  margin: 0 auto;
+  min-height: 100dvh;
+  position: relative;
+}
+@media (min-width: 560px) {
+  .app-col {
+    box-shadow: 0 50px 90px -30px rgba(24, 20, 40, 0.35);
+  }
+}
