@@ -53,6 +53,14 @@ export type TeamSound =
   | { kind: 'library'; libraryId: string; name: string }
   | { kind: 'recorded'; dataUrl: string; name: string }
 
+/** gravação guardada no grupo — reaproveitável em qualquer partida e sincronizada entre aparelhos */
+export interface GroupSound {
+  id: string
+  name: string
+  dataUrl: string
+  createdAt: number
+}
+
 export interface Team {
   name: string
   colorId: string

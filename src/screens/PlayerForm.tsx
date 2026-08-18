@@ -5,6 +5,7 @@ import { Button, Notice, Toggle } from '../components/ui'
 import { StarPicker } from '../components/player'
 import { useRoster } from '../state/roster'
 import { useSetup } from '../state/setup'
+import { useSession, isAdmin } from '../state/session'
 import { AVATAR_COLORS, initials } from '../lib/colors'
 import { newId } from '../lib/id'
 
@@ -15,6 +16,8 @@ export function PlayerForm() {
   const nav = useNavigate()
   const { players, addPlayer, updatePlayer } = useRoster()
   const togglePresent = useSetup((s) => s.togglePresent)
+  const { user, groups } = useSession()
+  const admin = isAdmin(groups.find((g) => g.id === groupId), user)
 
   const editing = useMemo(() => players.find((p) => p.id === playerId), [players, playerId])
 
@@ -48,6 +51,24 @@ export function PlayerForm() {
       if (fromCheckin) togglePresent(player.id)
     }
     nav(-1)
+  }
+
+  // rota acessada direto por quem não organiza: sem permissão pra mexer no elenco
+  if (!admin) {
+    return (
+      <Screen>
+        <Header back title="Jogadores" />
+        <Content>
+          <div className="flex flex-col items-center text-center gap-2 py-16 px-6">
+            <div className="text-[38px]">🔒</div>
+            <div className="text-[16.5px] font-bold text-ink mt-1">Só quem organiza mexe aqui</div>
+            <div className="text-[13.5px] text-ter max-w-[260px] leading-relaxed">
+              Cadastro e edição de jogadores ficam com quem criou o grupo.
+            </div>
+          </div>
+        </Content>
+      </Screen>
+    )
   }
 
   return (

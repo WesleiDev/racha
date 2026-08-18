@@ -14,6 +14,12 @@ service cloud.firestore {
         && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.members;
     }
 
+    // organizador: só ele mexe no elenco e apaga coisas do grupo
+    function isAdmin(groupId) {
+      return signedIn()
+        && request.auth.uid in get(/databases/$(database)/documents/groups/$(groupId)).data.admins;
+    }
+
     // perfil: só o dono
     match /users/{uid} {
       allow read, write: if signedIn() && request.auth.uid == uid;
@@ -33,12 +39,24 @@ service cloud.firestore {
       );
       allow delete: if signedIn() && request.auth.uid == resource.data.ownerId;
 
+      // elenco é responsabilidade de quem organiza: membro lê, admin edita/remove
       match /players/{playerId} {
-        allow read, write: if isMember(groupId);
+        allow read: if isMember(groupId);
+        allow write: if isAdmin(groupId);
       }
 
+      // partidas: qualquer membro pode marcar o placar; apagar é só do admin
       match /matches/{matchId} {
-        allow read, write: if isMember(groupId);
+        allow read: if isMember(groupId);
+        allow create, update: if isMember(groupId);
+        allow delete: if isAdmin(groupId);
+      }
+
+      // gravações do grupo: membro usa e cria; apagar é só do admin
+      match /sounds/{soundId} {
+        allow read: if isMember(groupId);
+        allow create, update: if isMember(groupId);
+        allow delete: if isAdmin(groupId);
       }
     }
 

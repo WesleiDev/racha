@@ -1,4 +1,4 @@
-import type { Group, Match, Player, UserProfile } from './types'
+import type { Group, GroupSound, Match, Player, UserProfile } from './types'
 
 /**
  * Contrato único de persistência. Duas implementações:
@@ -26,6 +26,11 @@ export interface DataAdapter {
   listPlayers(groupId: string): Promise<Player[]>
   savePlayer(groupId: string, player: Player): Promise<void>
   deletePlayer(groupId: string, playerId: string): Promise<void>
+
+  /* ---- sons gravados do grupo ---- */
+  listSounds(groupId: string): Promise<GroupSound[]>
+  saveSound(groupId: string, sound: GroupSound): Promise<void>
+  deleteSound(groupId: string, soundId: string): Promise<void>
 
   /* ---- partidas ---- */
   listMatches(groupId: string): Promise<Match[]>

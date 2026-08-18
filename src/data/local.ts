@@ -1,5 +1,5 @@
 import type { DataAdapter } from './adapter'
-import type { Group, Match, Player, UserProfile } from './types'
+import type { Group, GroupSound, Match, Player, UserProfile } from './types'
 
 // as chaves mantêm o prefixo "racha." de antes do rename pra TemJogo —
 // trocar apagaria os dados já salvos nos aparelhos
@@ -7,6 +7,7 @@ const K = {
   user: 'racha.user',
   groups: 'racha.groups',
   players: (gid: string) => `racha.players.${gid}`,
+  sounds: (gid: string) => `racha.sounds.${gid}`,
   matches: (gid: string) => `racha.matches.${gid}`,
   live: (token: string) => `racha.live.${token}`,
 }
@@ -101,6 +102,22 @@ export const localAdapter: DataAdapter = {
 
   async deletePlayer(groupId, playerId) {
     write(K.players(groupId), read<Player[]>(K.players(groupId), []).filter((p) => p.id !== playerId))
+  },
+
+  async listSounds(groupId) {
+    return read<GroupSound[]>(K.sounds(groupId), [])
+  },
+
+  async saveSound(groupId, sound) {
+    const all = read<GroupSound[]>(K.sounds(groupId), [])
+    const i = all.findIndex((s) => s.id === sound.id)
+    if (i >= 0) all[i] = sound
+    else all.push(sound)
+    write(K.sounds(groupId), all)
+  },
+
+  async deleteSound(groupId, soundId) {
+    write(K.sounds(groupId), read<GroupSound[]>(K.sounds(groupId), []).filter((s) => s.id !== soundId))
   },
 
   async listMatches(groupId) {

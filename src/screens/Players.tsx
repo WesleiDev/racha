@@ -56,23 +56,31 @@ export function Players() {
               <Avatar name={p.name} color={p.color} />
               <span className="flex-1 text-[15.5px] font-medium text-ink">{p.name}</span>
               {admin && <Stars value={p.stars} size={13.5} />}
-              <button
-                onClick={() => setMenuFor(p)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-ter active:bg-field"
-                aria-label={`Opções de ${p.name}`}
-              >
-                <IconDots size={18} />
-              </button>
+              {admin && (
+                <button
+                  onClick={() => setMenuFor(p)}
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-ter active:bg-field"
+                  aria-label={`Opções de ${p.name}`}
+                >
+                  <IconDots size={18} />
+                </button>
+              )}
             </div>
           ))}
         </div>
       </Content>
 
-      <div className="px-5 pb-3">
-        <Button variant="black" size="md" className="h-[52px]" onClick={() => nav(`/g/${groupId}/jogadores/novo`)}>
-          + Novo jogador
-        </Button>
-      </div>
+      {admin ? (
+        <div className="px-5 pb-3">
+          <Button variant="black" size="md" className="h-[52px]" onClick={() => nav(`/g/${groupId}/jogadores/novo`)}>
+            + Novo jogador
+          </Button>
+        </div>
+      ) : (
+        <div className="px-5 pb-3 text-[12.5px] text-ter text-center">
+          Quem organiza o grupo cuida da lista de jogadores.
+        </div>
+      )}
       <TabBar groupId={groupId} active="jogadores" />
 
       <Sheet open={menuFor !== null} onClose={() => setMenuFor(null)}>

@@ -55,16 +55,24 @@ export const useSetup = create<SetupState>()(
         const cur = get().presentIds
         set({
           presentIds: cur.includes(playerId) ? cur.filter((id) => id !== playerId) : [...cur, playerId],
-          teams: [],
+          // esvazia a escalação (o sorteio precisa refazer), mas mantém nome/cor/som dos times
+          teams: get().teams.map((t) => ({ ...t, playerIds: [], pinned: [] })),
           bench: [],
         })
       },
 
       draw: (players) => {
-        const { config, presentIds } = get()
+        const { config, presentIds, teams: current } = get()
         const present = players.filter((p) => presentIds.includes(p.id))
         const result = drawTeams(present, config.numTeams, config.playersPerTeam)
-        const teams = result.teams.map((ids, i) => ({ ...makeTeam(i), playerIds: ids }))
+        const teams = result.teams.map((ids, i) => {
+          const base = makeTeam(i)
+          const kept = current[i]
+          // nome, cor e som escolhidos não se perdem quando os times são refeitos
+          return kept
+            ? { ...base, name: kept.name, colorId: kept.colorId, sound: kept.sound, playerIds: ids }
+            : { ...base, playerIds: ids }
+        })
         set({ teams, bench: result.bench })
       },
 

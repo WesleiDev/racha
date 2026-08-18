@@ -24,6 +24,7 @@ import {
   IconStop,
   IconSwap,
   IconUndo,
+  IconX,
 } from '../components/icons'
 import { useRoster } from '../state/roster'
 import { useSetup } from '../state/setup'
@@ -32,6 +33,7 @@ import { useLive } from '../state/live'
 import type { Player, Team, TeamSound } from '../data/types'
 import { teamColor, TEAM_COLORS } from '../lib/colors'
 import { balance } from '../lib/draw'
+import { newId } from '../lib/id'
 import { fmtStars } from '../lib/format'
 import { MicPermissionError, playLibrary, playRecorded, recordClip, SOUND_LIBRARY, ensureCtx } from '../lib/audio'
 
@@ -169,9 +171,11 @@ type RecState =
   | { phase: 'preview'; dataUrl: string }
   | { phase: 'denied' }
 
-function SoundSheet({ teamIndex, onClose }: { teamIndex: number | null; onClose: () => void }) {
+function SoundSheet({ teamIndex, onClose, admin }: { teamIndex: number | null; onClose: () => void; admin: boolean }) {
   const { teams, setTeamSound } = useSetup()
+  const { sounds, addSound, removeSound } = useRoster()
   const [rec, setRec] = useState<RecState>({ phase: 'idle' })
+  const [saving, setSaving] = useState(false)
   const recorder = useRef<{ stop: () => void } | null>(null)
   const team = teamIndex !== null ? teams[teamIndex] : null
 
@@ -185,6 +189,20 @@ function SoundSheet({ teamIndex, onClose }: { teamIndex: number | null; onClose:
   const pick = (sound: TeamSound) => {
     setTeamSound(teamIndex, sound)
     onClose()
+  }
+
+  /** guarda a gravação no grupo (fica salva pras próximas partidas) e usa nela */
+  const keepRecording = async (dataUrl: string) => {
+    setSaving(true)
+    const n = sounds.length + 1
+    const saved = { id: newId(), name: `Grito da galera ${n}`, dataUrl, createdAt: Date.now() }
+    try {
+      await addSound(saved)
+    } catch {
+      /* sem rede: segue com o som na partida atual mesmo */
+    }
+    setSaving(false)
+    pick({ kind: 'recorded', dataUrl, name: saved.name })
   }
 
   const startRecording = async () => {
@@ -266,10 +284,11 @@ function SoundSheet({ teamIndex, onClose }: { teamIndex: number | null; onClose:
                 <IconUndo size={12} color="#fff" /> de novo
               </button>
               <button
-                onClick={() => pick({ kind: 'recorded', dataUrl: rec.dataUrl, name: 'Grito da galera' })}
-                className="text-[12px] font-bold text-ink bg-lime rounded-full px-3 py-1.5"
+                onClick={() => void keepRecording(rec.dataUrl)}
+                disabled={saving}
+                className="text-[12px] font-bold text-ink bg-lime rounded-full px-3 py-1.5 disabled:opacity-60"
               >
-                Usar esse
+                {saving ? 'salvando…' : 'Salvar e usar'}
               </button>
             </div>
           )}
@@ -280,8 +299,51 @@ function SoundSheet({ teamIndex, onClose }: { teamIndex: number | null; onClose:
           )}
         </div>
 
+        {/* gravações do grupo — ficam salvas pras próximas partidas */}
+        {sounds.length > 0 && (
+          <div className="mt-4">
+            <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-ter mb-1">Gravados pelo grupo</div>
+            <div className="flex flex-col">
+              {sounds.map((s, i) => {
+                const selected = team.sound.kind === 'recorded' && team.sound.dataUrl === s.dataUrl
+                return (
+                  <div key={s.id} className={`flex items-center gap-3 py-2.5 ${i > 0 ? 'border-t border-field' : ''}`}>
+                    <button
+                      onClick={() => void playRecorded(s.dataUrl)}
+                      className="w-[26px] h-[26px] rounded-full border border-strong flex items-center justify-center text-ink active:bg-field flex-none"
+                      aria-label={`Ouvir ${s.name}`}
+                    >
+                      <IconPlay size={11} />
+                    </button>
+                    <button
+                      onClick={() => pick({ kind: 'recorded', dataUrl: s.dataUrl, name: s.name })}
+                      className="flex-1 text-left"
+                    >
+                      <span className={`text-[14.5px] font-medium ${selected ? 'text-accent-press' : 'text-ink'}`}>
+                        {s.name}
+                      </span>
+                    </button>
+                    {selected && <Dot color={color.hex} size={8} />}
+                    {admin && (
+                      <button
+                        onClick={() => void removeSound(s.id)}
+                        className="w-7 h-7 flex items-center justify-center text-dis active:text-danger"
+                        aria-label={`Apagar ${s.name}`}
+                      >
+                        <IconX size={14} />
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* biblioteca */}
-        <div className="mt-4 flex flex-col">
+        <div className="mt-4">
+          <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-ter mb-1">Prontos</div>
+          <div className="flex flex-col">
           {SOUND_LIBRARY.map((s, i) => {
             const selected = team.sound.kind === 'library' && team.sound.libraryId === s.id
             return (
@@ -301,6 +363,7 @@ function SoundSheet({ teamIndex, onClose }: { teamIndex: number | null; onClose:
               </div>
             )
           })}
+          </div>
         </div>
       </div>
     </Sheet>
@@ -333,9 +396,10 @@ export function Draw() {
   const present = useMemo(() => players.filter((p) => presentIds.includes(p.id)), [players, presentIds])
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players])
 
+  const needsDraw = teams.length === 0 || teams.every((t) => t.playerIds.length === 0)
   useEffect(() => {
-    if (teams.length === 0 && present.length >= 2) draw(players)
-  }, [teams.length, present.length, draw, players])
+    if (needsDraw && present.length >= 2) draw(players)
+  }, [needsDraw, present.length, draw, players])
 
   const bal = teams.length > 0 ? balance(teams.map((t) => t.playerIds), present) : null
   const balText =
@@ -420,7 +484,7 @@ export function Draw() {
         </div>
       </BottomBar>
 
-      <SoundSheet teamIndex={soundFor} onClose={() => setSoundFor(null)} />
+      <SoundSheet teamIndex={soundFor} onClose={() => setSoundFor(null)} admin={admin} />
     </Screen>
   )
 }

@@ -27,7 +27,7 @@ import {
   type Firestore,
 } from 'firebase/firestore'
 import type { DataAdapter } from './adapter'
-import type { Group, Match, Player, UserProfile } from './types'
+import type { Group, GroupSound, Match, Player, UserProfile } from './types'
 import { firebaseConfig } from './firebaseConfig'
 
 /**
@@ -37,6 +37,7 @@ import { firebaseConfig } from './firebaseConfig'
  *   users/{uid}                     → perfil
  *   groups/{gid}                    → grupo (members: uid[])
  *   groups/{gid}/players/{pid}      → jogadores
+ *   groups/{gid}/sounds/{sid}       → gravações do grupo (base64, reaproveitáveis)
  *   groups/{gid}/matches/{mid}      → partidas (áudio dos times vai em base64 no doc)
  *   invites/{token}                 → resumo público p/ entrar por link
  *   live/{token}                    → partida ao vivo (leitura pública, espectador)
@@ -153,6 +154,22 @@ export const firebaseAdapter: DataAdapter = {
   async deletePlayer(groupId, playerId) {
     const { db } = init()
     await deleteDoc(doc(db, 'groups', groupId, 'players', playerId))
+  },
+
+  async listSounds(groupId) {
+    const { db } = init()
+    const snap = await getDocs(collection(db, 'groups', groupId, 'sounds'))
+    return snap.docs.map((d) => d.data() as GroupSound).sort((a, b) => a.createdAt - b.createdAt)
+  },
+
+  async saveSound(groupId, sound) {
+    const { db } = init()
+    await setDoc(doc(db, 'groups', groupId, 'sounds', sound.id), sound)
+  },
+
+  async deleteSound(groupId, soundId) {
+    const { db } = init()
+    await deleteDoc(doc(db, 'groups', groupId, 'sounds', soundId))
   },
 
   async listMatches(groupId) {

@@ -76,12 +76,14 @@ export function CheckIn() {
           })}
         </div>
 
-        <button
-          onClick={() => nav(`/g/${groupId}/jogadores/novo?de=checkin`)}
-          className="border border-dashed border-strong rounded-[14px] h-12 text-[14px] font-semibold text-sec flex items-center justify-center gap-2 active:bg-field"
-        >
-          <IconPlus size={16} /> Avulso
-        </button>
+        {admin && (
+          <button
+            onClick={() => nav(`/g/${groupId}/jogadores/novo?de=checkin`)}
+            className="border border-dashed border-strong rounded-[14px] h-12 text-[14px] font-semibold text-sec flex items-center justify-center gap-2 active:bg-field"
+          >
+            <IconPlus size={16} /> Avulso
+          </button>
+        )}
 
         {count > capacity && (
           <div className="text-[12.5px] text-ter text-center">
