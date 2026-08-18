@@ -1,6 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="96 126 328 288">
-  <rect x="108" y="138" width="296" height="200" rx="64" fill="#15141A"/>
-  <path d="M248 336 C 228 374, 192 396, 152 402 C 176 376, 186 356, 186 330 Z" fill="#15141A"/>
-  <circle cx="199" cy="238" r="37" fill="#7C4DFF"/>
-  <circle cx="313" cy="238" r="37" fill="#FF6A1F"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="88 88 336 336">
+  <defs>
+    <clipPath id="ball"><circle cx="256" cy="256" r="152"/></clipPath>
+  </defs>
+  <g transform="rotate(45 256 256)">
+    <circle cx="256" cy="256" r="152" fill="#7C4DFF"/>
+    <g clip-path="url(#ball)">
+      <path d="M256 104 A152 152 0 0 1 256 408 Z" fill="#FF6A1F"/>
+      <circle cx="256" cy="180" r="76" fill="#FF6A1F"/>
+      <circle cx="256" cy="332" r="76" fill="#7C4DFF"/>
+      <path d="M256 96 A76 76 0 0 0 256 256 A76 76 0 0 1 256 416" fill="none" stroke="#15141A" stroke-width="11"/>
+    </g>
+  </g>
 </svg>
