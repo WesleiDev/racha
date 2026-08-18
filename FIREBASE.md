@@ -53,14 +53,15 @@ Sai em `https://temjogo-app.web.app`. Depois, em **Authentication → Settings �
 
 Estado: **conectado e servindo** — HTTPS com HSTS, HTTP redireciona pra HTTPS, e o Firebase já adicionou `temjogo.app` aos domínios autorizados do Auth (login funciona pelo domínio).
 
-Falta, se quiser 100%:
+Concluído:
 
-1. **`www.temjogo.app`** (hoje não responde): Hosting → adicionar domínio → `www.temjogo.app` como redirect pro principal, e criar o registro que ele pedir no DNS da Hostinger.
-2. **`authDomain` no domínio próprio** — recomendado por causa do Safari/iPhone, que bloqueia armazenamento de terceiros e pode quebrar o login por redirect:
-   - Google Cloud Console → **APIs e serviços → Credenciais** → cliente OAuth "Web client (auto created by Google Service)" → em **URIs de redirecionamento autorizados**, adicionar `https://temjogo.app/__/auth/handler` → salvar.
-   - Só depois trocar `authDomain` pra `'temjogo.app'` em `src/data/firebaseConfig.ts`. **Se trocar antes, o login quebra** (`redirect_uri_mismatch`).
-   - O handler já é servido no domínio (`https://temjogo.app/__/auth/handler` responde), então não precisa mexer em rewrite.
-3. **Logo na tela de consentimento** (opcional): agora que o domínio existe, dá pra subir `public/logo-120.png` em Tela de permissão OAuth — o Google costuma pedir verificação de marca, que leva alguns dias.
+- **`authDomain: 'temjogo.app'`** — o login roda na mesma origem do app (evita o bloqueio de armazenamento de terceiros do Safari/iPhone). Depende de `https://temjogo.app/__/auth/handler` estar nas **URIs de redirecionamento autorizados** do cliente OAuth (Google Cloud Console → Credenciais → "Web client (auto created by Google Service)"). Já está lá; se algum dia o login der `redirect_uri_mismatch`, é essa lista que quebrou.
+- **`www.temjogo.app`** — DNS aponta pro Hosting; o certificado é emitido automaticamente (pode levar até 24h na primeira vez).
+
+Opcional que ficou de fora:
+
+- **Logo na tela de consentimento**: subir `public/logo-120.png` em Tela de permissão OAuth. O Google costuma exigir verificação de marca (alguns dias) — o nome "TemJogo" já aparece sem isso.
+- **Analytics**: o `measurementId` está no config mas o app não inicializa o Analytics (nenhum rastreamento hoje).
 
 ## Cache do Hosting
 
