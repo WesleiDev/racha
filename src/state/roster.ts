@@ -23,10 +23,15 @@ export const useRoster = create<RosterState>((set, get) => ({
 
   load: async (groupId) => {
     set({ loading: true, groupId })
-    const [players, matches] = await Promise.all([db.listPlayers(groupId), db.listMatches(groupId)])
-    // se o usuário navegou pra outro grupo no meio do load, descarta
-    if (get().groupId !== groupId) return
-    set({ players, matches, loading: false })
+    try {
+      const [players, matches] = await Promise.all([db.listPlayers(groupId), db.listMatches(groupId)])
+      // se o usuário navegou pra outro grupo no meio do load, descarta
+      if (get().groupId !== groupId) return
+      set({ players, matches, loading: false })
+    } catch (e) {
+      console.error('[grupo]', e)
+      if (get().groupId === groupId) set({ players: [], matches: [], loading: false })
+    }
   },
 
   addPlayer: async (p) => {

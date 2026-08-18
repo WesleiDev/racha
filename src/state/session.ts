@@ -35,7 +35,7 @@ export const useSession = create<SessionState>((set, get) => ({
       set({ user, ready: true })
       if (user) {
         if (hasCloud) await migrateLocalToCloud(db, user).catch(() => 0)
-        await get().refreshGroups()
+        await get().refreshGroups().catch(() => {})
       } else {
         set({ groups: [], groupsLoaded: false })
       }
@@ -57,7 +57,13 @@ export const useSession = create<SessionState>((set, get) => ({
   refreshGroups: async () => {
     const { user } = get()
     if (!user) return
-    set({ groups: await db.listGroups(user.id), groupsLoaded: true })
+    try {
+      set({ groups: await db.listGroups(user.id), groupsLoaded: true })
+    } catch (e) {
+      // sem rede/permissão: libera a UI pra mostrar estado vazio em vez de travar
+      console.error('[grupos]', e)
+      set({ groupsLoaded: true })
+    }
   },
 
   createGroup: async (name, sport, schedule) => {

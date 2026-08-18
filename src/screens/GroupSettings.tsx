@@ -124,6 +124,8 @@ export function GroupSettings() {
             </span>
           </span>
         </button>
+
+        <div className="text-[11.5px] text-dis text-center pt-1">TemJogo · versão {__BUILD_TIME__}</div>
       </Content>
 
       <Sheet open={pickingSport} onClose={() => setPickingSport(false)}>

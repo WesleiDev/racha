@@ -3,7 +3,19 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const buildTime = new Date().toLocaleString('pt-BR', {
+  timeZone: 'America/Sao_Paulo',
+  day: '2-digit',
+  month: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+})
+
 export default defineConfig({
+  define: {
+    // carimbo do build: dá pra ver em Configurações se o deploy chegou
+    __BUILD_TIME__: JSON.stringify(buildTime),
+  },
   plugins: [
     react(),
     tailwindcss(),
@@ -29,6 +41,10 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallbackDenylist: [/^\/__/],
+        // deploy novo assume o controle na hora e limpa o cache velho
+        clientsClaim: true,
+        skipWaiting: true,
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
