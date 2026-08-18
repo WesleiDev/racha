@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { MatchConfig, Player, Team } from '../data/types'
 import { defaultConfig } from '../data/types'
-import { drawTeams } from '../lib/draw'
+import { drawTeams, teamsSignature } from '../lib/draw'
 import { DEFAULT_SOUND } from '../lib/audio'
 import { TEAM_COLORS, teamColor } from '../lib/colors'
 
@@ -17,7 +17,8 @@ interface SetupState {
   setConfig: (patch: Partial<MatchConfig>) => void
   togglePresent: (playerId: string) => void
   draw: (players: Player[]) => void
-  redraw: (players: Player[]) => void
+  /** re-sorteia mantendo os fixados; devolve false se não deu pra mudar nada */
+  redraw: (players: Player[]) => boolean
   movePlayer: (playerId: string, toTeam: number | 'bench') => void
   togglePin: (playerId: string) => void
   renameTeam: (index: number, name: string) => void
@@ -69,14 +70,19 @@ export const useSetup = create<SetupState>()(
 
       redraw: (players) => {
         const { config, presentIds, teams } = get()
-        if (teams.length === 0) return get().draw(players)
+        if (teams.length === 0) {
+          get().draw(players)
+          return true
+        }
         const present = players.filter((p) => presentIds.includes(p.id))
         const pinned = teams.map((t) => t.pinned)
-        const result = drawTeams(present, config.numTeams, config.playersPerTeam, pinned)
+        const before = teamsSignature(teams.map((t) => t.playerIds))
+        const result = drawTeams(present, config.numTeams, config.playersPerTeam, pinned, before)
         set({
           teams: teams.map((t, i) => ({ ...t, playerIds: result.teams[i] ?? [] })),
           bench: result.bench,
         })
+        return teamsSignature(result.teams) !== before
       },
 
       movePlayer: (playerId, toTeam) => {

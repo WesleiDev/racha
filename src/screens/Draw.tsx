@@ -14,7 +14,17 @@ import {
 import { Screen, Header, Content, BottomBar } from '../components/layout'
 import { Button, Dot, Sheet } from '../components/ui'
 import { Avatar, Stars } from '../components/player'
-import { IconDrag, IconMic, IconPencil, IconPin, IconPlay, IconSpeaker, IconStop, IconUndo } from '../components/icons'
+import {
+  IconDrag,
+  IconMic,
+  IconPencil,
+  IconPin,
+  IconPlay,
+  IconSpeaker,
+  IconStop,
+  IconSwap,
+  IconUndo,
+} from '../components/icons'
 import { useRoster } from '../state/roster'
 import { useSetup } from '../state/setup'
 import { useSession, isAdmin } from '../state/session'
@@ -309,6 +319,7 @@ export function Draw() {
   const startMatch = useLive((s) => s.start)
   const [soundFor, setSoundFor] = useState<number | null>(null)
   const [dragging, setDragging] = useState<Player | null>(null)
+  const [stuck, setStuck] = useState(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -340,6 +351,12 @@ export function Draw() {
     else if (String(over).startsWith('team-')) movePlayer(playerId, Number(String(over).slice(5)))
   }
 
+  const againstRepeat = () => {
+    const changed = redraw(players)
+    setStuck(!changed)
+    if (!changed) setTimeout(() => setStuck(false), 5000)
+  }
+
   const begin = () => {
     ensureCtx() // gesto do usuário → áudio liberado
     const group = groups.find((g) => g.id === groupId)
@@ -349,19 +366,7 @@ export function Draw() {
 
   return (
     <Screen>
-      <Header
-        back
-        title="Times sorteados"
-        sub="Arrasta pra trocar de lado"
-        right={
-          <button
-            onClick={() => redraw(players)}
-            className="h-9 px-3.5 rounded-full border border-strong text-[13px] font-bold text-ink flex items-center gap-1.5 active:bg-field"
-          >
-            <IconUndo size={13} /> Re-sortear
-          </button>
-        }
-      />
+      <Header back title="Times sorteados" sub="Arrasta pra trocar de lado" />
       <Content className="flex flex-col gap-3 pb-4">
         {admin && bal && (
           <div className="bg-success-soft text-success-ink rounded-[13px] px-3.5 py-2.5 text-[13px] font-semibold flex items-center justify-between">
@@ -397,9 +402,22 @@ export function Draw() {
       </Content>
 
       <BottomBar>
-        <Button variant="black" onClick={begin} disabled={teams.length < 2}>
-          Começar partida
-        </Button>
+        {stuck && (
+          <div className="bg-notice text-notice-ink text-[12px] font-medium rounded-[10px] px-3 py-2 mb-2 text-center leading-snug">
+            Deu nos mesmos times — solta os pinos (ou chama mais gente) pra variar.
+          </div>
+        )}
+        <div className="flex gap-2.5">
+          <button
+            onClick={againstRepeat}
+            className="h-[54px] px-3.5 rounded-[15px] border border-strong text-ink text-[13.5px] font-bold flex items-center justify-center gap-1.5 active:bg-field flex-none"
+          >
+            <IconSwap size={15} /> Sortear de novo
+          </button>
+          <Button variant="black" onClick={begin} disabled={teams.length < 2} className="flex-1">
+            Começar partida
+          </Button>
+        </div>
       </BottomBar>
 
       <SoundSheet teamIndex={soundFor} onClose={() => setSoundFor(null)} />
