@@ -36,6 +36,8 @@ export interface DataAdapter {
   listMatches(groupId: string): Promise<Match[]>
   saveMatch(groupId: string, match: Match): Promise<void>
   deleteMatch(groupId: string, matchId: string): Promise<void>
+  /** acompanha em tempo real os jogos de uma rodada (as duas quadras se enxergam) */
+  watchSessionMatches(groupId: string, sessionId: string, cb: (matches: Match[]) => void): () => void
 
   /* ---- placar ao vivo (espectador) ---- */
   publishLive(match: Match): Promise<void>

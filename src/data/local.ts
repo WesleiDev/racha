@@ -130,10 +130,34 @@ export const localAdapter: DataAdapter = {
     if (i >= 0) all[i] = match
     else all.push(match)
     write(K.matches(groupId), all)
+    liveChannel?.postMessage({ matches: groupId })
   },
 
   async deleteMatch(groupId, matchId) {
     write(K.matches(groupId), read<Match[]>(K.matches(groupId), []).filter((m) => m.id !== matchId))
+    liveChannel?.postMessage({ matches: groupId })
+  },
+
+  watchSessionMatches(groupId, sessionId, cb) {
+    const emit = () =>
+      cb(
+        read<Match[]>(K.matches(groupId), [])
+          .filter((m) => m.sessionId === sessionId)
+          .sort((a, b) => a.startedAt - b.startedAt),
+      )
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === K.matches(groupId)) emit()
+    }
+    const onMessage = (e: MessageEvent) => {
+      if (e.data?.matches === groupId) emit()
+    }
+    window.addEventListener('storage', onStorage)
+    liveChannel?.addEventListener('message', onMessage)
+    emit()
+    return () => {
+      window.removeEventListener('storage', onStorage)
+      liveChannel?.removeEventListener('message', onMessage)
+    }
   },
 
   async publishLive(match) {

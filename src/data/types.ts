@@ -77,8 +77,13 @@ export interface Match {
   id: string
   groupId: string
   groupName: string
-  /** scheduled = times sorteados e salvos, jogo ainda não começou */
+  /**
+   * scheduled = rodada: times sorteados, container dos jogos da noite
+   * live/finished = um jogo entre DOIS times (sempre dois, pro ranking bater)
+   */
   status: 'scheduled' | 'live' | 'finished'
+  /** id da rodada que originou este jogo (ausente em jogo avulso) */
+  sessionId?: string
   /** quando a escalação foi salva; vira a hora do apito quando o jogo começa */
   startedAt: number
   finishedAt?: number

@@ -188,6 +188,15 @@ export const firebaseAdapter: DataAdapter = {
     await deleteDoc(doc(db, 'groups', groupId, 'matches', matchId))
   },
 
+  watchSessionMatches(groupId, sessionId, cb) {
+    const { db } = init()
+    return onSnapshot(
+      query(collection(db, 'groups', groupId, 'matches'), where('sessionId', '==', sessionId)),
+      (snap) => cb(snap.docs.map((d) => d.data() as Match).sort((a, b) => a.startedAt - b.startedAt)),
+      () => cb([]),
+    )
+  },
+
   async publishLive(match) {
     const { db } = init()
     await setDoc(doc(db, 'live', match.liveToken), match)

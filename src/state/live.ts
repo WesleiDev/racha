@@ -14,8 +14,12 @@ interface LiveState {
   runningSince: number | null
 
   start: (groupId: string, groupName: string, config: MatchConfig, teams: Team[], bench: string[], players: Player[]) => Match
-  /** começa o jogo a partir de uma escalação salva (mantém times, sons e o link já compartilhado) */
-  startFrom: (match: Match) => Match
+  /**
+   * Começa UM jogo da rodada entre dois dos times sorteados.
+   * Cria registro próprio (id e link novos), então duas quadras podem rodar
+   * em celulares diferentes sem uma sobrescrever a outra.
+   */
+  startGame: (session: Match, teamIdx: [number, number]) => Match
   point: (team: number) => void
   removeLastPointOf: (team: number) => void
   undo: () => void
@@ -46,20 +50,28 @@ export const useLive = create<LiveState>()(
         return match
       },
 
-      startFrom: (saved) => {
+      startGame: (session, [i, j]) => {
+        const teams = [session.teams[i], session.teams[j]]
         const match: Match = {
-          ...saved,
-          status: 'live',
-          startedAt: Date.now(),
-          events: [],
-          flip: false,
+          ...buildMatch(
+            session.groupId,
+            session.groupName,
+            session.config,
+            teams,
+            session.bench,
+            [],
+            'live',
+          ),
+          sessionId: session.id,
+          // mantém os nomes de todo mundo (banco incluso) pro histórico não ficar com "?"
+          players: session.players,
         }
         set({
           match,
           elapsedMs: 0,
           runningSince: match.config.scoring === 'tempo' ? null : Date.now(),
         })
-        void preloadMatchSounds(match.teams)
+        void preloadMatchSounds(teams)
         publish(match)
         return match
       },

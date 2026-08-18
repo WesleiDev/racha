@@ -106,7 +106,9 @@ export function GroupDashboard() {
         {scheduled && (
           <Card onClick={() => nav(`/g/${groupId}/escalacao/${scheduled.id}`)} className="p-[18px] border-accent-line">
             <div className="flex items-center justify-between">
-              <SectionLabel className="!text-accent">Times prontos · {fmtDay(scheduled.startedAt)}</SectionLabel>
+              <SectionLabel className="!text-accent">
+                {scheduled.teams.length > 2 ? 'Rodada' : 'Times prontos'} · {fmtDay(scheduled.startedAt)}
+              </SectionLabel>
               <span className="text-[12.5px] font-semibold text-accent">ver</span>
             </div>
             <div className="flex items-center gap-2 mt-2.5 flex-wrap">

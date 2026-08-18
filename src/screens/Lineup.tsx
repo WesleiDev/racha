@@ -1,79 +1,172 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { Screen, Header, Content, BottomBar } from '../components/layout'
-import { Button, Card, Dot, Modal, SectionLabel } from '../components/ui'
+import { Button, Card, Dot, LiveDot, Modal, SectionLabel, Sheet } from '../components/ui'
 import { Avatar } from '../components/player'
-import { IconCopy, IconShare, IconX } from '../components/icons'
+import { IconCopy, IconPlay, IconShare, IconX } from '../components/icons'
 import { useRoster } from '../state/roster'
 import { useLive } from '../state/live'
 import { db } from '../data'
+import type { Match } from '../data/types'
 import { teamColor } from '../lib/colors'
 import { shareLineup } from '../lib/match'
 import { sportLabel } from '../data/types'
 import { fmtDayTime } from '../lib/format'
 import { ensureCtx } from '../lib/audio'
+import { computeBoard, allSets } from '../lib/scoring'
+import { matchWinner } from '../lib/rank'
 
-/** escalação sorteada e salva: dá pra mandar no grupo agora e jogar depois */
+/** placar resumido de um jogo da rodada */
+function GameRow({ game, onOpen }: { game: Match; onOpen: () => void }) {
+  const board = computeBoard(game.config, game.events, game.serveStart, game.teams.length)
+  const live = game.status === 'live'
+  // jogo rolando: mostra o set atual (sets ganhos ainda são 0-0 no primeiro set)
+  const score = live ? board.current : game.config.scoring === 'sets' ? board.setsWon : allSets(board).at(-1) ?? [0, 0]
+  const setsBadge = live && board.closedSets.length > 0 ? board.setsWon.join('–') : null
+  const winner = game.status === 'finished' ? matchWinner(game) : null
+
+  return (
+    <button
+      onClick={onOpen}
+      className={`w-full text-left rounded-[14px] border px-3.5 py-3 flex items-center gap-3 ${
+        live ? 'border-danger/40 bg-danger/[0.04]' : 'border-cardline bg-card'
+      }`}
+    >
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 text-[14.5px] font-semibold text-ink">
+          <Dot color={teamColor(game.teams[0].colorId).hex} size={7} />
+          <span className={winner === 1 ? 'text-ter' : ''}>{game.teams[0].name.replace(/^Time /, '')}</span>
+          <span className="text-dis">×</span>
+          <span className={winner === 0 ? 'text-ter' : ''}>{game.teams[1]?.name.replace(/^Time /, '')}</span>
+          <Dot color={teamColor(game.teams[1]?.colorId ?? 'laranja').hex} size={7} />
+        </div>
+        <div className="text-[11.5px] text-ter mt-0.5 flex items-center gap-1.5">
+          {live ? (
+            <>
+              <LiveDot color="#F2352C" />
+              rolando agora
+              {setsBadge && <span className="text-dis">· sets {setsBadge}</span>}
+            </>
+          ) : (
+            `encerrado · ${fmtDayTime(game.finishedAt ?? game.startedAt)}`
+          )}
+        </div>
+      </div>
+      <span className="num num-118 text-[19px] font-extrabold text-ink flex-none">
+        {score[0]}–{score[1]}
+      </span>
+    </button>
+  )
+}
+
 export function Lineup() {
   const { groupId = '', matchId = '' } = useParams()
   const nav = useNavigate()
-  const { matches, load, groupId: loaded, deleteMatch } = useRoster()
-  const startFrom = useLive((s) => s.startFrom)
+  const { matches, load, groupId: loaded, deleteMatch, saveMatch } = useRoster()
+  const startGame = useLive((s) => s.startGame)
+  const liveMatch = useLive((s) => s.match)
   const [msg, setMsg] = useState<string | null>(null)
   const [confirmDrop, setConfirmDrop] = useState(false)
+  const [picking, setPicking] = useState(false)
+  const [games, setGames] = useState<Match[]>([])
 
   useEffect(() => {
     if (groupId && loaded !== groupId) void load(groupId)
   }, [groupId, loaded, load])
 
-  const match = matches.find((m) => m.id === matchId)
+  // jogos da rodada em tempo real: quem está na quadra 1 vê o placar da quadra 2
+  useEffect(() => {
+    if (!groupId || !matchId) return
+    return db.watchSessionMatches(groupId, matchId, setGames)
+  }, [groupId, matchId])
 
-  if (!match) {
+  const session = matches.find((m) => m.id === matchId)
+
+  const lastWinnerTeam = useMemo(() => {
+    const finished = games.filter((g) => g.status === 'finished')
+    const last = finished[finished.length - 1]
+    if (!last) return null
+    const w = matchWinner(last)
+    return w === null ? null : last.teams[w]?.name ?? null
+  }, [games])
+
+  if (!session) {
     return (
       <Screen>
-        <Header back={`/g/${groupId}`} title="Escalação" />
+        <Header back={`/g/${groupId}`} title="Rodada" />
         <Content>
-          <div className="text-[14px] text-ter text-center py-16">Escalação não encontrada.</div>
+          <div className="text-[14px] text-ter text-center py-16">Rodada não encontrada.</div>
         </Content>
       </Screen>
     )
   }
 
-  const url = `${location.origin}/ao-vivo/${match.liveToken}`
+  const url = `${location.origin}/ao-vivo/${session.liveToken}`
+  const multi = session.teams.length > 2
 
   const share = async () => {
-    const r = await shareLineup(match, url)
+    const r = await shareLineup(session, url)
     if (r === 'copied') setMsg('Copiado! É só colar no grupo.')
     if (r === 'failed') setMsg('Não rolou copiar — o link tá logo abaixo.')
     if (r !== 'shared') setTimeout(() => setMsg(null), 4000)
   }
 
-  const play = () => {
+  const play = (i: number, j: number) => {
     ensureCtx()
-    const live = startFrom(match)
-    void useRoster.getState().saveMatch(live)
+    const game = startGame(session, [i, j])
+    void saveMatch(game)
+    setPicking(false)
     nav(`/g/${groupId}/placar`, { replace: true })
   }
 
   const drop = async () => {
-    await deleteMatch(match.id)
-    void db.clearLive(match.liveToken).catch(() => {})
+    await deleteMatch(session.id)
+    void db.clearLive(session.liveToken).catch(() => {})
     nav(`/g/${groupId}`, { replace: true })
   }
+
+  const hasLiveHere = liveMatch?.status === 'live' && liveMatch.sessionId === session.id
 
   return (
     <Screen>
       <Header
         back={`/g/${groupId}`}
-        title="Times sorteados"
-        sub={`${sportLabel(match.config.sport).toLowerCase()} · salvo ${fmtDayTime(match.startedAt)}`}
+        title={multi ? 'Rodada' : 'Times sorteados'}
+        sub={`${session.teams.length} times · ${sportLabel(session.config.sport).toLowerCase()} · ${fmtDayTime(session.startedAt)}`}
       />
       <Content className="flex flex-col gap-3 pb-4">
-        <div className="bg-accent-soft text-accent-press rounded-[14px] px-3.5 py-3 text-[12.5px] font-medium leading-snug">
-          Escalação guardada. Manda no grupo e, na hora do jogo, é só apertar “Começar partida”.
-        </div>
+        {/* jogos */}
+        <Card className="p-4">
+          <div className="flex items-center justify-between">
+            <SectionLabel>Jogos da rodada</SectionLabel>
+            {games.length > 0 && <span className="text-[12px] text-ter">{games.length}</span>}
+          </div>
+          {games.length === 0 ? (
+            <div className="text-[13px] text-ter mt-2 leading-relaxed">
+              Nenhum jogo ainda.{' '}
+              {multi
+                ? 'Escolhe quem entra em quadra — dá pra rodar duas quadras em celulares diferentes.'
+                : 'É só começar quando a bola subir.'}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2 mt-2.5">
+              {games.map((g) => (
+                <GameRow
+                  key={g.id}
+                  game={g}
+                  onOpen={() =>
+                    g.status === 'live' && liveMatch?.id === g.id
+                      ? nav(`/g/${groupId}/placar`)
+                      : nav(`/g/${groupId}/partida/${g.id}`)
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </Card>
 
-        {match.teams.map((team, i) => {
+        {/* times sorteados */}
+        {session.teams.map((team, i) => {
           const c = teamColor(team.colorId)
           return (
             <Card key={i} className="overflow-hidden">
@@ -89,11 +182,11 @@ export function Lineup() {
                     className={`flex items-center gap-2.5 py-2 text-[14.5px] text-ink ${k > 0 ? 'border-t border-field' : ''}`}
                   >
                     <Avatar
-                      name={match.players[pid]?.name ?? '?'}
-                      color={match.players[pid]?.color ?? '#9A97A5'}
+                      name={session.players[pid]?.name ?? '?'}
+                      color={session.players[pid]?.color ?? '#9A97A5'}
                       size={26}
                     />
-                    {match.players[pid]?.name ?? '?'}
+                    {session.players[pid]?.name ?? '?'}
                   </span>
                 ))}
               </div>
@@ -101,21 +194,21 @@ export function Lineup() {
           )
         })}
 
-        {match.bench.length > 0 && (
+        {session.bench.length > 0 && (
           <div className="border border-dashed border-strong rounded-[16px] px-4 py-3">
             <SectionLabel>Banco · quem ganha fica</SectionLabel>
             <div className="flex gap-2 flex-wrap mt-2">
-              {match.bench.map((pid) => (
+              {session.bench.map((pid) => (
                 <span
                   key={pid}
                   className="bg-white border border-cardline rounded-full pl-1 pr-3 py-1 flex items-center gap-2 text-[13px] text-ink"
                 >
                   <Avatar
-                    name={match.players[pid]?.name ?? '?'}
-                    color={match.players[pid]?.color ?? '#9A97A5'}
+                    name={session.players[pid]?.name ?? '?'}
+                    color={session.players[pid]?.color ?? '#9A97A5'}
                     size={22}
                   />
-                  {match.players[pid]?.name ?? '?'}
+                  {session.players[pid]?.name ?? '?'}
                 </span>
               ))}
             </div>
@@ -142,7 +235,7 @@ export function Lineup() {
             </button>
           </div>
           <div className="text-[12px] text-ter mt-2">
-            O mesmo link vira o placar ao vivo quando a partida começar.
+            Mostra os times sorteados. Cada jogo tem o próprio link de placar ao vivo.
           </div>
         </Card>
 
@@ -150,7 +243,7 @@ export function Lineup() {
           onClick={() => setConfirmDrop(true)}
           className="text-[13px] font-semibold text-danger py-2 flex items-center justify-center gap-1.5"
         >
-          <IconX size={14} /> Descartar escalação
+          <IconX size={14} /> Encerrar rodada
         </button>
       </Content>
 
@@ -163,16 +256,71 @@ export function Lineup() {
           >
             <IconShare size={15} /> Mandar no grupo
           </button>
-          <Button variant="black" onClick={play}>
-            Começar partida
-          </Button>
+          {hasLiveHere ? (
+            <Button variant="black" onClick={() => nav(`/g/${groupId}/placar`)}>
+              Voltar pro jogo em andamento
+            </Button>
+          ) : (
+            <Button variant="black" onClick={() => (multi ? setPicking(true) : play(0, 1))}>
+              {games.length > 0 ? 'Começar outro jogo' : 'Começar partida'}
+            </Button>
+          )}
         </div>
       </BottomBar>
 
+      {/* quem entra em quadra */}
+      <Sheet open={picking} onClose={() => setPicking(false)}>
+        <div className="px-5 pt-3 pb-2">
+          <div className="text-[19px] font-extrabold text-ink tracking-[-0.02em]">Quem entra em quadra?</div>
+          <div className="text-[13px] text-ter mt-0.5 mb-4">
+            {lastWinnerTeam ? `${lastWinnerTeam} venceu o último — quem ganha fica.` : 'Escolhe o confronto desta quadra.'}
+          </div>
+          <div className="flex flex-col gap-2">
+            {session.teams.flatMap((a, i) =>
+              session.teams.slice(i + 1).map((b, k) => {
+                const j = i + 1 + k
+                const jaJogou = games.some(
+                  (g) =>
+                    g.teams.length === 2 &&
+                    [g.teams[0].name, g.teams[1].name].sort().join('|') === [a.name, b.name].sort().join('|'),
+                )
+                const emQuadra = games.some(
+                  (g) =>
+                    g.status === 'live' &&
+                    [g.teams[0].name, g.teams[1]?.name].sort().join('|') === [a.name, b.name].sort().join('|'),
+                )
+                return (
+                  <button
+                    key={`${i}-${j}`}
+                    onClick={() => play(i, j)}
+                    className="flex items-center gap-3 rounded-[14px] border border-cardline bg-card px-4 py-3 text-left active:border-accent"
+                  >
+                    <Dot color={teamColor(a.colorId).hex} size={12} />
+                    <span className="text-[15px] font-bold text-ink">{a.name.replace(/^Time /, '')}</span>
+                    <span className="text-dis text-[13px]">×</span>
+                    <span className="text-[15px] font-bold text-ink flex-1">{b.name.replace(/^Time /, '')}</span>
+                    <Dot color={teamColor(b.colorId).hex} size={12} />
+                    {emQuadra ? (
+                      <span className="text-[10.5px] font-extrabold text-danger bg-danger/10 rounded-full px-2 py-1">
+                        NA QUADRA
+                      </span>
+                    ) : jaJogou ? (
+                      <span className="text-[10.5px] font-bold text-ter bg-field rounded-full px-2 py-1">já jogou</span>
+                    ) : null}
+                  </button>
+                )
+              }),
+            )}
+          </div>
+        </div>
+      </Sheet>
+
       <Modal open={confirmDrop}>
         <div className="text-center">
-          <div className="text-[17px] font-extrabold text-ink">Descartar essa escalação?</div>
-          <div className="text-[13px] text-ter mt-1.5">Os times sorteados somem e o link para de funcionar.</div>
+          <div className="text-[17px] font-extrabold text-ink">Encerrar a rodada?</div>
+          <div className="text-[13px] text-ter mt-1.5">
+            Os jogos já registrados continuam no histórico. Só os times sorteados saem da tela.
+          </div>
           <div className="flex gap-2.5 mt-5">
             <button
               onClick={() => setConfirmDrop(false)}
@@ -184,7 +332,7 @@ export function Lineup() {
               onClick={() => void drop()}
               className="flex-1 h-12 rounded-[14px] bg-danger text-white text-[14px] font-bold"
             >
-              Descartar
+              Encerrar
             </button>
           </div>
         </div>

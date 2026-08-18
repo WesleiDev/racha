@@ -195,12 +195,24 @@ export function Summary() {
           Compartilhar no grupo
         </button>
         <div className="flex gap-2.5">
-          <button
-            onClick={finishAndGo}
-            className="flex-1 h-12 rounded-[14px] bg-white/10 text-white text-[14.5px] font-bold active:bg-white/20"
-          >
-            Salvar
-          </button>
+          {match.sessionId ? (
+            <button
+              onClick={() => {
+                live.discard()
+                nav(`/g/${groupId}/escalacao/${match.sessionId}`, { replace: true })
+              }}
+              className="flex-1 h-12 rounded-[14px] bg-white/10 text-white text-[14.5px] font-bold active:bg-white/20"
+            >
+              Próximo jogo
+            </button>
+          ) : (
+            <button
+              onClick={finishAndGo}
+              className="flex-1 h-12 rounded-[14px] bg-white/10 text-white text-[14.5px] font-bold active:bg-white/20"
+            >
+              Salvar
+            </button>
+          )}
           <button
             onClick={rematch}
             className="flex-1 h-12 rounded-[14px] border border-white/25 text-white text-[14.5px] font-bold active:bg-white/10"
@@ -208,6 +220,11 @@ export function Summary() {
             Revanche
           </button>
         </div>
+        {match.sessionId && (
+          <button onClick={finishAndGo} className="text-ondark-ter text-[13px] font-semibold py-1">
+            voltar pro grupo
+          </button>
+        )}
       </div>
     </Screen>
   )
