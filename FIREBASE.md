@@ -49,6 +49,24 @@ npx firebase-tools deploy
 
 Sai em `https://temjogo-app.web.app`. Depois, em **Authentication → Settings → Domínios autorizados**, confirme que o domínio do Hosting está na lista (o do próprio projeto já vem).
 
+## Domínio próprio (temjogo.app)
+
+Estado: **conectado e servindo** — HTTPS com HSTS, HTTP redireciona pra HTTPS, e o Firebase já adicionou `temjogo.app` aos domínios autorizados do Auth (login funciona pelo domínio).
+
+Falta, se quiser 100%:
+
+1. **`www.temjogo.app`** (hoje não responde): Hosting → adicionar domínio → `www.temjogo.app` como redirect pro principal, e criar o registro que ele pedir no DNS da Hostinger.
+2. **`authDomain` no domínio próprio** — recomendado por causa do Safari/iPhone, que bloqueia armazenamento de terceiros e pode quebrar o login por redirect:
+   - Google Cloud Console → **APIs e serviços → Credenciais** → cliente OAuth "Web client (auto created by Google Service)" → em **URIs de redirecionamento autorizados**, adicionar `https://temjogo.app/__/auth/handler` → salvar.
+   - Só depois trocar `authDomain` pra `'temjogo.app'` em `src/data/firebaseConfig.ts`. **Se trocar antes, o login quebra** (`redirect_uri_mismatch`).
+   - O handler já é servido no domínio (`https://temjogo.app/__/auth/handler` responde), então não precisa mexer em rewrite.
+3. **Logo na tela de consentimento** (opcional): agora que o domínio existe, dá pra subir `public/logo-120.png` em Tela de permissão OAuth — o Google costuma pedir verificação de marca, que leva alguns dias.
+
+## Cache do Hosting
+
+`firebase.json` manda `no-cache` no HTML/sw.js e `immutable` de 1 ano nos assets com hash.
+Detalhe que custou um bug: **no Hosting vale a última regra de header que casa** — por isso `/assets/**` fica depois do `**`.
+
 ## Notas
 
 - **Plano Spark (gratuito) basta.** O áudio dos times vai em base64 dentro do Firestore (~40KB por som), então não usamos Cloud Storage e não precisa de cartão.

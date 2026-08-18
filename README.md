@@ -1,6 +1,8 @@
 # TemJogo 🏐
 
-Sorteia os times, marca o placar, guarda a resenha. — **temjogo.app**
+Sorteia os times, marca o placar, guarda a resenha.
+
+**No ar:** [temjogo.app](https://temjogo.app) (e `temjogo-5271a.web.app`) · projeto Firebase `temjogo-5271a` · deploy automático a cada push na `main`.
 
 App web (PWA, mobile-first) pra organizar partidas casuais de qualquer esporte — vôlei, futsal, basquete, beach tennis: cadastrar a galera, sortear times equilibrados por estrelas, marcar o placar na quadra (com som de comemoração gravado pelo time!) e guardar histórico e ranking do grupo.
 
