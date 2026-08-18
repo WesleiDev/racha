@@ -84,6 +84,12 @@ export interface Match {
   status: 'scheduled' | 'live' | 'finished'
   /** id da rodada que originou este jogo (ausente em jogo avulso) */
   sessionId?: string
+  /**
+   * Placar digitado depois, sem ter usado o placar ao vivo.
+   * Fica em campo próprio de propósito: inventar eventos falsos faria a
+   * "corrida do placar" mentir. Quando existe, manda no lugar dos eventos.
+   */
+  manualSets?: number[][]
   /** quando a escalação foi salva; vira a hora do apito quando o jogo começa */
   startedAt: number
   finishedAt?: number

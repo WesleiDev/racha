@@ -9,16 +9,143 @@ import { useLive } from '../state/live'
 import { db } from '../data'
 import type { Match } from '../data/types'
 import { teamColor } from '../lib/colors'
-import { shareLineup } from '../lib/match'
+import { shareLineup, buildManualGame } from '../lib/match'
 import { sportLabel } from '../data/types'
 import { fmtDayTime } from '../lib/format'
 import { ensureCtx } from '../lib/audio'
-import { computeBoard, allSets } from '../lib/scoring'
+import { boardOf, allSets } from '../lib/scoring'
 import { matchWinner } from '../lib/rank'
+
+/** anotar o placar final de um jogo que rolou sem ninguém marcando */
+function ManualResult({
+  session,
+  onSave,
+  onCancel,
+}: {
+  session: Match
+  onSave: (teamIdx: [number, number], sets: number[][]) => void | Promise<void>
+  onCancel: () => void
+}) {
+  const pairs = session.teams.flatMap((a, i) =>
+    session.teams.slice(i + 1).map((b, k) => ({ i, j: i + 1 + k, a, b })),
+  )
+  const [pair, setPair] = useState(0)
+  const porSets = session.config.scoring === 'sets'
+  const [sets, setSets] = useState<string[][]>([['', '']])
+  const [busy, setBusy] = useState(false)
+
+  const chosen = pairs[pair]
+  const parsed = sets
+    .map((s) => [Number(s[0]), Number(s[1])])
+    .filter((s) => s.every((n) => Number.isFinite(n)) && (s[0] > 0 || s[1] > 0))
+  const valido = parsed.length > 0
+
+  const setValue = (row: number, col: number, v: string) => {
+    const clean = v.replace(/\D/g, '').slice(0, 2)
+    setSets((prev) => prev.map((s, r) => (r === row ? (col === 0 ? [clean, s[1]] : [s[0], clean]) : s)))
+  }
+
+  const input =
+    'w-full h-[52px] rounded-[13px] border border-strong bg-white text-center num num-118 text-[22px] font-extrabold text-ink outline-none focus:border-accent'
+
+  return (
+    <div className="px-5 pt-3 pb-2">
+      <div className="text-[19px] font-extrabold text-ink tracking-[-0.02em]">Anotar resultado</div>
+      <div className="text-[13px] text-ter mt-0.5 mb-4">Jogo que rolou sem ninguém marcando o placar.</div>
+
+      {pairs.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1 mb-3">
+          {pairs.map((p, idx) => (
+            <button
+              key={idx}
+              onClick={() => setPair(idx)}
+              className={`flex-none rounded-full px-3.5 h-9 text-[13px] font-bold border flex items-center gap-1.5 ${
+                idx === pair ? 'bg-ink text-white border-ink' : 'bg-white text-sec border-knob2'
+              }`}
+            >
+              <Dot color={teamColor(p.a.colorId).hex} size={7} />
+              {p.a.name.replace(/^Time /, '')} × {p.b.name.replace(/^Time /, '')}
+              <Dot color={teamColor(p.b.colorId).hex} size={7} />
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between text-[13.5px] font-bold text-ink mb-2">
+        <span className="flex items-center gap-1.5">
+          <Dot color={teamColor(chosen.a.colorId).hex} size={9} />
+          {chosen.a.name.replace(/^Time /, '')}
+        </span>
+        <span className="flex items-center gap-1.5">
+          {chosen.b.name.replace(/^Time /, '')}
+          <Dot color={teamColor(chosen.b.colorId).hex} size={9} />
+        </span>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        {sets.map((s, row) => (
+          <div key={row} className="flex items-center gap-2.5">
+            {porSets && <span className="text-[11px] font-bold text-ter w-10">SET {row + 1}</span>}
+            <input
+              value={s[0]}
+              onChange={(e) => setValue(row, 0, e.target.value)}
+              inputMode="numeric"
+              placeholder="0"
+              className={input}
+            />
+            <span className="text-dis text-[15px]">×</span>
+            <input
+              value={s[1]}
+              onChange={(e) => setValue(row, 1, e.target.value)}
+              inputMode="numeric"
+              placeholder="0"
+              className={input}
+            />
+            {sets.length > 1 && (
+              <button
+                onClick={() => setSets((prev) => prev.filter((_, r) => r !== row))}
+                className="w-7 h-7 flex items-center justify-center text-dis"
+                aria-label="Remover set"
+              >
+                <IconX size={14} />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {porSets && sets.length < session.config.bestOf && (
+        <button
+          onClick={() => setSets((prev) => [...prev, ['', '']])}
+          className="mt-2.5 h-10 w-full rounded-[12px] border border-dashed border-strong text-[13px] font-bold text-sec active:bg-field"
+        >
+          + Adicionar set
+        </button>
+      )}
+
+      <div className="flex gap-2.5 mt-4">
+        <button onClick={onCancel} className="flex-1 h-[50px] rounded-[14px] bg-field text-ink text-[14.5px] font-bold">
+          Cancelar
+        </button>
+        <button
+          disabled={!valido || busy}
+          onClick={async () => {
+            setBusy(true)
+            await onSave([chosen.i, chosen.j], parsed)
+            setBusy(false)
+          }}
+          className="flex-1 h-[50px] rounded-[14px] bg-ink text-white text-[14.5px] font-bold disabled:opacity-40"
+        >
+          Salvar resultado
+        </button>
+      </div>
+    </div>
+  )
+}
 
 /** placar resumido de um jogo da rodada */
 function GameRow({ game, onOpen }: { game: Match; onOpen: () => void }) {
-  const board = computeBoard(game.config, game.events, game.serveStart, game.teams.length)
+  const board = boardOf(game)
   const live = game.status === 'live'
   // jogo rolando: mostra o set atual (sets ganhos ainda são 0-0 no primeiro set)
   const score = live ? board.current : game.config.scoring === 'sets' ? board.setsWon : allSets(board).at(-1) ?? [0, 0]
@@ -68,6 +195,7 @@ export function Lineup() {
   const [msg, setMsg] = useState<string | null>(null)
   const [confirmDrop, setConfirmDrop] = useState(false)
   const [picking, setPicking] = useState(false)
+  const [noting, setNoting] = useState(false)
   const [games, setGames] = useState<Match[]>([])
 
   useEffect(() => {
@@ -163,6 +291,12 @@ export function Lineup() {
               ))}
             </div>
           )}
+          <button
+            onClick={() => setNoting(true)}
+            className="mt-3 h-10 w-full rounded-[12px] border border-dashed border-strong text-[13px] font-bold text-sec active:bg-field"
+          >
+            + Anotar resultado (jogo sem placar)
+          </button>
         </Card>
 
         {/* times sorteados */}
@@ -267,6 +401,21 @@ export function Lineup() {
           )}
         </div>
       </BottomBar>
+
+      {/* anotar resultado sem placar ao vivo */}
+      <Sheet open={noting} onClose={() => setNoting(false)}>
+        <ManualResult
+          session={session}
+          onCancel={() => setNoting(false)}
+          onSave={async (idx, sets) => {
+            const game = buildManualGame(session, idx, sets)
+            await saveMatch(game)
+            setNoting(false)
+            setMsg('Resultado anotado!')
+            setTimeout(() => setMsg(null), 3000)
+          }}
+        />
+      </Sheet>
 
       {/* quem entra em quadra */}
       <Sheet open={picking} onClose={() => setPicking(false)}>

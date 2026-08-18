@@ -1,6 +1,6 @@
 import type { Match } from '../data/types'
 import { teamColor } from './colors'
-import { computeBoard, allSets } from './scoring'
+import { boardOf, allSets } from './scoring'
 import { fmtDay } from './format'
 
 const W = 1080
@@ -25,7 +25,7 @@ export async function drawResultCard(
   g.fillRect(0, 0, W, H)
 
   const pad = 66
-  const board = computeBoard(match.config, match.events, match.serveStart, match.teams.length)
+  const board = boardOf(match)
   const sets = allSets(board)
   const scores = match.config.scoring === 'sets' ? board.setsWon : sets[sets.length - 1] ?? [0, 0]
   const winner = board.winner ?? (scores[0] === scores[1] ? -1 : scores.indexOf(Math.max(...scores)))

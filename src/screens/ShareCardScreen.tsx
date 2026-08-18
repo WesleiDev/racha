@@ -6,7 +6,7 @@ import { useRoster } from '../state/roster'
 import { useLive } from '../state/live'
 import { drawResultCard, shareCard, canvasToBlob } from '../lib/shareCard'
 import { matchWinner } from '../lib/rank'
-import { allSets, computeBoard } from '../lib/scoring'
+import { allSets, boardOf } from '../lib/scoring'
 
 export function ShareCardScreen() {
   const { groupId = '', matchId = '' } = useParams()
@@ -29,7 +29,7 @@ export function ShareCardScreen() {
   const whatsapp = async () => {
     if (!canvasRef.current) return
     const winner = matchWinner(match)
-    const board = computeBoard(match.config, match.events, match.serveStart, match.teams.length)
+    const board = boardOf(match)
     const sets = allSets(board)
       .map((s) => `${s[0]}-${s[1]}`)
       .join(' · ')

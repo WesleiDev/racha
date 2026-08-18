@@ -10,7 +10,7 @@ import { useRoster } from '../state/roster'
 import { useLive } from '../state/live'
 import { sportLabel } from '../data/types'
 import { teamColor } from '../lib/colors'
-import { computeBoard } from '../lib/scoring'
+import { boardOf } from '../lib/scoring'
 import { computeRanking } from '../lib/rank'
 import { fmtDay } from '../lib/format'
 
@@ -164,7 +164,7 @@ export function GroupDashboard() {
 function LastLine({ matchId }: { matchId: string }) {
   const match = useRoster((s) => s.matches.find((m) => m.id === matchId))
   if (!match) return null
-  const board = computeBoard(match.config, match.events, match.serveStart, match.teams.length)
+  const board = boardOf(match)
   const score = match.config.scoring === 'sets' ? board.setsWon : board.closedSets.at(-1) ?? board.current
   const [a, b] = match.teams
   return (

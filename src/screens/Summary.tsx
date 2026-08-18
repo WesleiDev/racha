@@ -7,7 +7,7 @@ import { useRoster } from '../state/roster'
 import { useLive } from '../state/live'
 import { useSession } from '../state/session'
 import { teamColor, TEAM_COLORS } from '../lib/colors'
-import { computeBoard, allSets } from '../lib/scoring'
+import { boardOf, allSets } from '../lib/scoring'
 import { matchWinner } from '../lib/rank'
 import { fmtDayTime, fmtDuration } from '../lib/format'
 import { ensureCtx } from '../lib/audio'
@@ -66,7 +66,7 @@ export function Summary() {
     )
   }
 
-  const board = computeBoard(match.config, match.events, match.serveStart, match.teams.length)
+  const board = boardOf(match)
   const sets = allSets(board)
   const winner = matchWinner(match)
   const loser = winner === null ? null : winner === 0 ? 1 : 0

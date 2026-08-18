@@ -1,4 +1,4 @@
-import type { MatchConfig, MatchEvent } from '../data/types'
+import type { Match, MatchConfig, MatchEvent } from '../data/types'
 
 export interface BoardState {
   /** placares dos sets fechados, por time */
@@ -86,6 +86,43 @@ export function computeBoard(config: MatchConfig, events: MatchEvent[], serveSta
   }
 
   return { closedSets, current, setsWon, setIndex, isTiebreak, serve, pendingSetWin, finished, winner }
+}
+
+/** monta o estado a partir de parciais digitadas (resultado anotado depois do jogo) */
+export function boardFromSets(config: MatchConfig, sets: number[][], numTeams = 2): BoardState {
+  const setsWon = Array(numTeams).fill(0)
+  for (const s of sets) {
+    const max = Math.max(...s)
+    const winners = s.map((v, i) => (v === max ? i : -1)).filter((i) => i >= 0)
+    if (winners.length === 1) setsWon[winners[0]] += 1
+  }
+
+  const totals = Array.from({ length: numTeams }, (_, t) => sets.reduce((sum, s) => sum + (s[t] ?? 0), 0))
+  const decide = (arr: number[]) => {
+    const max = Math.max(...arr)
+    return arr.filter((v) => v === max).length === 1 ? arr.indexOf(max) : null
+  }
+  const winner = config.scoring === 'sets' ? decide(setsWon) ?? decide(totals) : decide(totals)
+
+  return {
+    closedSets: sets,
+    current: Array(numTeams).fill(0),
+    setsWon,
+    setIndex: sets.length + 1,
+    isTiebreak: false,
+    serve: 0,
+    pendingSetWin: null,
+    finished: true,
+    winner,
+  }
+}
+
+/** estado do placar de uma partida, tenha ela sido marcada ao vivo ou anotada depois */
+export function boardOf(match: Match): BoardState {
+  if (match.manualSets && match.manualSets.length > 0) {
+    return boardFromSets(match.config, match.manualSets, match.teams.length)
+  }
+  return computeBoard(match.config, match.events, match.serveStart, match.teams.length)
 }
 
 /** vencedor "no estado atual" (para encerrar manualmente): mais sets; empate → pontos totais */

@@ -5,7 +5,7 @@ import { TabBar } from '../components/tabbar'
 import { Card, Dot, EmptyState } from '../components/ui'
 import { useRoster } from '../state/roster'
 import { teamColor } from '../lib/colors'
-import { computeBoard, allSets } from '../lib/scoring'
+import { boardOf, allSets } from '../lib/scoring'
 import { fmtDayParts, fmtDuration } from '../lib/format'
 import { sportLabel } from '../data/types'
 
@@ -32,7 +32,7 @@ export function History() {
           />
         )}
         {finished.map((m) => {
-          const board = computeBoard(m.config, m.events, m.serveStart, m.teams.length)
+          const board = boardOf(m)
           const sets = allSets(board)
           const score = m.config.scoring === 'sets' ? board.setsWon : sets.at(-1) ?? [0, 0]
           const { day, month } = fmtDayParts(m.startedAt)

@@ -31,6 +31,27 @@ export function buildMatch(
   }
 }
 
+/** jogo cujo placar foi digitado depois (ninguém marcou ao vivo) */
+export function buildManualGame(session: Match, teamIdx: [number, number], sets: number[][]): Match {
+  const [i, j] = teamIdx
+  const base = buildMatch(
+    session.groupId,
+    session.groupName,
+    session.config,
+    [session.teams[i], session.teams[j]],
+    session.bench,
+    [],
+    'finished',
+  )
+  return {
+    ...base,
+    sessionId: session.id,
+    players: session.players,
+    manualSets: sets,
+    finishedAt: Date.now(),
+  }
+}
+
 /** texto pro grupo do WhatsApp: quem joga com quem + link */
 export function lineupText(match: Match, url: string): string {
   const lines = match.teams.map((t) => {

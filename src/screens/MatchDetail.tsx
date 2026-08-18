@@ -4,7 +4,7 @@ import { Screen, Header, Content } from '../components/layout'
 import { Card, Dot, SectionLabel } from '../components/ui'
 import { useRoster } from '../state/roster'
 import { teamColor } from '../lib/colors'
-import { computeBoard, allSets } from '../lib/scoring'
+import { boardOf, allSets } from '../lib/scoring'
 import { fmtDay, fmtDuration } from '../lib/format'
 import { sportLabel } from '../data/types'
 import type { Match } from '../data/types'
@@ -66,14 +66,15 @@ export function MatchDetail() {
 
   useEffect(() => {
     if (match) {
-      const board = computeBoard(match.config, match.events, match.serveStart, match.teams.length)
+      const board = boardOf(match)
       setSetIdx(Math.max(0, allSets(board).length - 1))
     }
   }, [match?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!match) return <Screen />
 
-  const board = computeBoard(match.config, match.events, match.serveStart, match.teams.length)
+  const board = boardOf(match)
+  const manual = Boolean(match.manualSets?.length)
   const sets = allSets(board)
   const score = match.config.scoring === 'sets' ? board.setsWon : sets.at(-1) ?? [0, 0]
   const dur = ((match.finishedAt ?? match.startedAt) - match.startedAt) / 1000
@@ -110,21 +111,31 @@ export function MatchDetail() {
           </Card>
         )}
 
-        <Card className="p-4">
-          <SectionLabel>
-            Corrida do placar{match.config.scoring === 'sets' ? ` · ${setIdx + 1}º set` : ''}
-          </SectionLabel>
-          <div className="mt-3">
-            <RaceChart match={match} setIndex={setIdx} />
-          </div>
-          <div className="flex items-center gap-4 mt-2">
-            {match.teams.slice(0, 2).map((t, i) => (
-              <span key={i} className="flex items-center gap-1.5 text-[12px] font-semibold text-sec">
-                <Dot color={teamColor(t.colorId).hex} size={7} /> {short(i)}
-              </span>
-            ))}
-          </div>
-        </Card>
+        {/* sem timeline de pontos num resultado anotado — não inventa gráfico */}
+        {manual ? (
+          <Card className="p-4">
+            <SectionLabel>Resultado anotado</SectionLabel>
+            <div className="text-[13px] text-ter mt-2 leading-relaxed">
+              Este placar foi lançado depois do jogo, então não tem a corrida do placar ponto a ponto.
+            </div>
+          </Card>
+        ) : (
+          <Card className="p-4">
+            <SectionLabel>
+              Corrida do placar{match.config.scoring === 'sets' ? ` · ${setIdx + 1}º set` : ''}
+            </SectionLabel>
+            <div className="mt-3">
+              <RaceChart match={match} setIndex={setIdx} />
+            </div>
+            <div className="flex items-center gap-4 mt-2">
+              {match.teams.slice(0, 2).map((t, i) => (
+                <span key={i} className="flex items-center gap-1.5 text-[12px] font-semibold text-sec">
+                  <Dot color={teamColor(t.colorId).hex} size={7} /> {short(i)}
+                </span>
+              ))}
+            </div>
+          </Card>
+        )}
 
         <div className="grid grid-cols-2 gap-2.5">
           {match.teams.slice(0, 2).map((team, i) => (

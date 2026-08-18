@@ -8,7 +8,7 @@ import type { Group, Match, Sport } from '../data/types'
 import { SPORTS, sportLabel } from '../data/types'
 import { SPORT_ICONS } from '../components/icons'
 import { teamColor } from '../lib/colors'
-import { computeBoard } from '../lib/scoring'
+import { boardOf } from '../lib/scoring'
 import { initials } from '../lib/colors'
 
 function GroupCard({ group }: { group: Group }) {
@@ -47,7 +47,7 @@ function GroupCard({ group }: { group: Group }) {
 }
 
 function LastScore({ match }: { match: Match }) {
-  const board = computeBoard(match.config, match.events, match.serveStart, match.teams.length)
+  const board = boardOf(match)
   const score =
     match.config.scoring === 'sets'
       ? board.setsWon

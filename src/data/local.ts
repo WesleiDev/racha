@@ -29,6 +29,18 @@ const authListeners = new Set<(u: UserProfile | null) => void>()
 const liveChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('racha-live') : null
 
 /**
+ * Observadores desta aba. O BroadcastChannel não entrega pra própria instância
+ * que publicou (e `storage` também não dispara na aba que escreveu), então
+ * uma escrita local precisa avisar os observadores daqui na mão.
+ */
+const matchListeners = new Set<(groupId: string) => void>()
+
+function notifyMatches(groupId: string): void {
+  matchListeners.forEach((cb) => cb(groupId))
+  liveChannel?.postMessage({ matches: groupId })
+}
+
+/**
  * Adapter padrão: tudo no localStorage do aparelho.
  * O "login com Google" vira uma sessão local até o Firebase ser conectado —
  * os dados criados aqui são migrados pra nuvem no primeiro login real (ver migrate.ts).
@@ -130,12 +142,12 @@ export const localAdapter: DataAdapter = {
     if (i >= 0) all[i] = match
     else all.push(match)
     write(K.matches(groupId), all)
-    liveChannel?.postMessage({ matches: groupId })
+    notifyMatches(groupId)
   },
 
   async deleteMatch(groupId, matchId) {
     write(K.matches(groupId), read<Match[]>(K.matches(groupId), []).filter((m) => m.id !== matchId))
-    liveChannel?.postMessage({ matches: groupId })
+    notifyMatches(groupId)
   },
 
   watchSessionMatches(groupId, sessionId, cb) {
@@ -151,12 +163,17 @@ export const localAdapter: DataAdapter = {
     const onMessage = (e: MessageEvent) => {
       if (e.data?.matches === groupId) emit()
     }
+    const onLocal = (gid: string) => {
+      if (gid === groupId) emit()
+    }
     window.addEventListener('storage', onStorage)
     liveChannel?.addEventListener('message', onMessage)
+    matchListeners.add(onLocal)
     emit()
     return () => {
       window.removeEventListener('storage', onStorage)
       liveChannel?.removeEventListener('message', onMessage)
+      matchListeners.delete(onLocal)
     }
   },
 

@@ -1,5 +1,5 @@
 import type { Match } from '../data/types'
-import { computeBoard, allSets } from './scoring'
+import { boardOf, allSets } from './scoring'
 
 export interface RankRow {
   playerId: string
@@ -28,7 +28,7 @@ export function playingTeams(m: Match): number[] {
 }
 
 export function matchWinner(m: Match): number | null {
-  const board = computeBoard(m.config, m.events, m.serveStart, m.teams.length)
+  const board = boardOf(m)
   if (board.winner !== null) return board.winner
   // encerrada manualmente: mais sets; empate → mais pontos
   const sets = allSets(board)
@@ -87,7 +87,7 @@ export function computeHighlights(matches: Match[], ranking: RankRow[]): Highlig
 
   let blowout: Highlights['blowout'] = null
   for (const m of matches.filter((x) => x.status === 'finished')) {
-    const board = computeBoard(m.config, m.events, m.serveStart, m.teams.length)
+    const board = boardOf(m)
     for (const set of allSets(board)) {
       const sorted = [...set].sort((a, b) => b - a)
       const diff = sorted[0] - sorted[1]
