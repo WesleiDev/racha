@@ -14,6 +14,7 @@ interface RosterState {
   updatePlayer: (p: Player) => Promise<void>
   removePlayer: (playerId: string) => Promise<void>
   saveMatch: (m: Match) => Promise<void>
+  deleteMatch: (matchId: string) => Promise<void>
   addSound: (s: GroupSound) => Promise<void>
   removeSound: (soundId: string) => Promise<void>
 }
@@ -69,6 +70,13 @@ export const useRoster = create<RosterState>((set, get) => ({
     const rest = get().matches.filter((x) => x.id !== m.id)
     set({ matches: [m, ...rest].sort((a, b) => b.startedAt - a.startedAt) })
     await db.saveMatch(groupId, m)
+  },
+
+  deleteMatch: async (matchId) => {
+    const { groupId } = get()
+    if (!groupId) return
+    set({ matches: get().matches.filter((m) => m.id !== matchId) })
+    await db.deleteMatch(groupId, matchId)
   },
 
   addSound: async (s) => {

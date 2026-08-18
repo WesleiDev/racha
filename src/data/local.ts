@@ -132,6 +132,10 @@ export const localAdapter: DataAdapter = {
     write(K.matches(groupId), all)
   },
 
+  async deleteMatch(groupId, matchId) {
+    write(K.matches(groupId), read<Match[]>(K.matches(groupId), []).filter((m) => m.id !== matchId))
+  },
+
   async publishLive(match) {
     write(K.live(match.liveToken), match)
     liveChannel?.postMessage({ token: match.liveToken })

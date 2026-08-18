@@ -21,6 +21,7 @@ import {
   IconPin,
   IconPlay,
   IconSpeaker,
+  IconShare,
   IconStop,
   IconSwap,
   IconUndo,
@@ -34,6 +35,8 @@ import type { Player, Team, TeamSound } from '../data/types'
 import { teamColor, TEAM_COLORS } from '../lib/colors'
 import { balance } from '../lib/draw'
 import { newId } from '../lib/id'
+import { buildMatch } from '../lib/match'
+import { db } from '../data'
 import { fmtStars } from '../lib/format'
 import { MicPermissionError, playLibrary, playRecorded, recordClip, SOUND_LIBRARY, ensureCtx } from '../lib/audio'
 
@@ -375,10 +378,10 @@ function SoundSheet({ teamIndex, onClose, admin }: { teamIndex: number | null; o
 export function Draw() {
   const { groupId = '' } = useParams()
   const nav = useNavigate()
-  const { players, load, groupId: loaded } = useRoster()
+  const { players, load, groupId: loaded, saveMatch, matches, deleteMatch } = useRoster()
   const { user, groups } = useSession()
   const admin = isAdmin(groups.find((g) => g.id === groupId), user)
-  const { config, presentIds, teams, bench, draw, redraw, movePlayer } = useSetup()
+  const { config, presentIds, teams, bench, draw, redraw, movePlayer, reset } = useSetup()
   const startMatch = useLive((s) => s.start)
   const [soundFor, setSoundFor] = useState<number | null>(null)
   const [dragging, setDragging] = useState<Player | null>(null)
@@ -428,6 +431,22 @@ export function Draw() {
     nav(`/g/${groupId}/placar`)
   }
 
+  /** guarda a escalação sem começar o jogo — dá pra mandar no grupo e jogar depois */
+  const saveLineup = async () => {
+    const group = groups.find((g) => g.id === groupId)
+    const present = players.filter((p) => presentIds.includes(p.id))
+    const lineup = buildMatch(groupId, group?.name ?? 'TemJogo', config, teams, bench, present, 'scheduled')
+    // só faz sentido ter uma escalação esperando: a nova substitui a anterior
+    for (const old of matches.filter((m) => m.status === 'scheduled')) {
+      await deleteMatch(old.id).catch(() => {})
+      void db.clearLive(old.liveToken).catch(() => {})
+    }
+    await saveMatch(lineup)
+    void db.publishLive(lineup).catch(() => {})
+    reset()
+    nav(`/g/${groupId}/escalacao/${lineup.id}`, { replace: true })
+  }
+
   return (
     <Screen>
       <Header back title="Times sorteados" sub="Arrasta pra trocar de lado" />
@@ -471,15 +490,24 @@ export function Draw() {
             Deu nos mesmos times — solta os pinos (ou chama mais gente) pra variar.
           </div>
         )}
-        <div className="flex gap-2.5">
-          <button
-            onClick={againstRepeat}
-            className="h-[54px] px-3.5 rounded-[15px] border border-strong text-ink text-[13.5px] font-bold flex items-center justify-center gap-1.5 active:bg-field flex-none"
-          >
-            <IconSwap size={15} /> Sortear de novo
-          </button>
-          <Button variant="black" onClick={begin} disabled={teams.length < 2} className="flex-1">
-            Começar partida
+        <div className="flex flex-col gap-2">
+          <div className="flex gap-2">
+            <button
+              onClick={againstRepeat}
+              className="flex-1 h-[46px] rounded-[13px] border border-strong text-ink text-[13.5px] font-bold flex items-center justify-center gap-1.5 active:bg-field"
+            >
+              <IconSwap size={15} /> Sortear de novo
+            </button>
+            <button
+              onClick={() => void saveLineup()}
+              disabled={teams.length < 2}
+              className="flex-1 h-[46px] rounded-[13px] border border-strong text-ink text-[13.5px] font-bold flex items-center justify-center gap-1.5 active:bg-field disabled:opacity-40"
+            >
+              <IconShare size={14} /> Salvar pra depois
+            </button>
+          </div>
+          <Button variant="black" onClick={begin} disabled={teams.length < 2}>
+            Começar partida agora
           </Button>
         </div>
       </BottomBar>

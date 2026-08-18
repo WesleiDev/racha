@@ -35,6 +35,7 @@ export interface DataAdapter {
   /* ---- partidas ---- */
   listMatches(groupId: string): Promise<Match[]>
   saveMatch(groupId: string, match: Match): Promise<void>
+  deleteMatch(groupId: string, matchId: string): Promise<void>
 
   /* ---- placar ao vivo (espectador) ---- */
   publishLive(match: Match): Promise<void>

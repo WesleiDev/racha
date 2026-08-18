@@ -77,7 +77,9 @@ export interface Match {
   id: string
   groupId: string
   groupName: string
-  status: 'live' | 'finished'
+  /** scheduled = times sorteados e salvos, jogo ainda não começou */
+  status: 'scheduled' | 'live' | 'finished'
+  /** quando a escalação foi salva; vira a hora do apito quando o jogo começa */
   startedAt: number
   finishedAt?: number
   config: MatchConfig

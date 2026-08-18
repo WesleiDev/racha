@@ -45,11 +45,13 @@ service cloud.firestore {
         allow write: if isAdmin(groupId);
       }
 
-      // partidas: qualquer membro pode marcar o placar; apagar é só do admin
+      // partidas: qualquer membro marca o placar; apagar é do admin,
+      // menos escalação ainda não jogada, que quem salvou pode descartar
       match /matches/{matchId} {
         allow read: if isMember(groupId);
         allow create, update: if isMember(groupId);
-        allow delete: if isAdmin(groupId);
+        allow delete: if isAdmin(groupId)
+          || (isMember(groupId) && resource.data.status == 'scheduled');
       }
 
       // gravações do grupo: membro usa e cria; apagar é só do admin

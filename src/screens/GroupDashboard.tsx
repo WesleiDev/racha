@@ -53,6 +53,7 @@ export function GroupDashboard() {
   }
 
   const last = matches.find((m) => m.status === 'finished')
+  const scheduled = matches.find((m) => m.status === 'scheduled')
   const ranking = computeRanking(matches).slice(0, 3)
   const hasLive = liveMatch && liveMatch.status === 'live' && liveMatch.groupId === groupId
 
@@ -100,6 +101,27 @@ export function GroupDashboard() {
             {hasLive ? 'Tem partida rolando agora' : 'Bora jogar · sorteio em 3 toques'}
           </span>
         </button>
+
+        {/* escalação sorteada esperando o jogo */}
+        {scheduled && (
+          <Card onClick={() => nav(`/g/${groupId}/escalacao/${scheduled.id}`)} className="p-[18px] border-accent-line">
+            <div className="flex items-center justify-between">
+              <SectionLabel className="!text-accent">Times prontos · {fmtDay(scheduled.startedAt)}</SectionLabel>
+              <span className="text-[12.5px] font-semibold text-accent">ver</span>
+            </div>
+            <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+              {scheduled.teams.map((t, i) => (
+                <span key={i} className="flex items-center gap-1.5 text-[14.5px] font-semibold text-ink">
+                  <Dot color={teamColor(t.colorId).hex} size={8} />
+                  {t.name.replace(/^Time /, '')}
+                  <span className="text-[12px] text-ter font-medium">({t.playerIds.length})</span>
+                  {i < scheduled.teams.length - 1 && <span className="text-dis mx-1">×</span>}
+                </span>
+              ))}
+            </div>
+            <div className="text-[12px] text-ter mt-2">Toca pra mandar no grupo ou começar a partida.</div>
+          </Card>
+        )}
 
         {/* última partida */}
         {last && (

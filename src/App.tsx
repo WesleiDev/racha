@@ -17,6 +17,7 @@ import { History } from './screens/History'
 import { MatchDetail } from './screens/MatchDetail'
 import { Ranking } from './screens/Ranking'
 import { GroupSettings } from './screens/GroupSettings'
+import { Lineup } from './screens/Lineup'
 import { LiveView } from './screens/LiveView'
 import { JoinInvite } from './screens/JoinInvite'
 
@@ -70,6 +71,7 @@ export function App() {
         <Route path="/g/:groupId/nova-partida" element={<RequireAuth><NewMatch /></RequireAuth>} />
         <Route path="/g/:groupId/checkin" element={<RequireAuth><CheckIn /></RequireAuth>} />
         <Route path="/g/:groupId/sorteio" element={<RequireAuth><Draw /></RequireAuth>} />
+        <Route path="/g/:groupId/escalacao/:matchId" element={<RequireAuth><Lineup /></RequireAuth>} />
         <Route path="/g/:groupId/placar" element={<RequireAuth><Scoreboard /></RequireAuth>} />
         <Route path="/g/:groupId/resumo/:matchId" element={<RequireAuth><Summary /></RequireAuth>} />
         <Route path="/g/:groupId/card/:matchId" element={<RequireAuth><ShareCardScreen /></RequireAuth>} />

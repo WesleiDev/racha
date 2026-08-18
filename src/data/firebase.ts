@@ -183,6 +183,11 @@ export const firebaseAdapter: DataAdapter = {
     await setDoc(doc(db, 'groups', groupId, 'matches', match.id), match)
   },
 
+  async deleteMatch(groupId, matchId) {
+    const { db } = init()
+    await deleteDoc(doc(db, 'groups', groupId, 'matches', matchId))
+  },
+
   async publishLive(match) {
     const { db } = init()
     await setDoc(doc(db, 'live', match.liveToken), match)

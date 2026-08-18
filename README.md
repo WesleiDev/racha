@@ -22,7 +22,8 @@ npm run build      # produção em dist/
 - **Jogadores com estrelas** (1–5, meia estrela): nível visível só pra organizadores.
 - **Check-in** do dia + avulsos.
 - **Sorteio equilibrado** (snake draft por estrelas) com drag & drop, fixar jogador (pino), re-sortear e banco ("quem ganha fica").
-- **Som do time**: grava 3s no microfone ou escolhe da biblioteca (sintetizada, sem assets); toca a cada ponto.
+- **Escalação salva**: sorteia antes (na quarta), manda os times no grupo e, na hora do jogo, é só "Começar partida". O link compartilhado vira o placar ao vivo quando a bola sobe.
+- **Som do time**: grava 3s no microfone ou escolhe da biblioteca (sintetizada, sem assets); toca a cada ponto. Gravações ficam salvas no grupo e valem pras próximas partidas.
 - **Placar** landscape fullscreen: tela sempre acesa (wake lock), undo sempre à mão, sets com vantagem de 2 e tiebreak, saque, inverter lados, cronômetro pausável (modos tempo/livre), debounce de toque duplo, offline-first.
 - **Resumo** com confete + **card 1080×1350** pra compartilhar no WhatsApp (com MVP).
 - **Histórico** com corrida do placar (SVG) e escalações; **ranking** com pódio, sequência e maior lavada.

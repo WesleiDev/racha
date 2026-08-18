@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { db } from '../data'
 import type { Match, MatchConfig, Player, Team } from '../data/types'
-import { newId, newToken } from '../lib/id'
+import { buildMatch } from '../lib/match'
 import { computeBoard } from '../lib/scoring'
 import { playTeamSound, preloadMatchSounds } from '../lib/audio'
 
@@ -14,6 +14,8 @@ interface LiveState {
   runningSince: number | null
 
   start: (groupId: string, groupName: string, config: MatchConfig, teams: Team[], bench: string[], players: Player[]) => Match
+  /** começa o jogo a partir de uma escalação salva (mantém times, sons e o link já compartilhado) */
+  startFrom: (match: Match) => Match
   point: (team: number) => void
   removeLastPointOf: (team: number) => void
   undo: () => void
@@ -37,25 +39,27 @@ export const useLive = create<LiveState>()(
       runningSince: null,
 
       start: (groupId, groupName, config, teams, bench, players) => {
-        const snapshot: Match['players'] = {}
-        for (const p of players) snapshot[p.id] = { name: p.name, color: p.color }
-        const match: Match = {
-          id: newId(),
-          groupId,
-          groupName,
-          status: 'live',
-          startedAt: Date.now(),
-          config,
-          teams,
-          bench,
-          players: snapshot,
-          events: [],
-          flip: false,
-          serveStart: Math.random() < 0.5 ? 0 : 1,
-          liveToken: newToken(4),
-        }
+        const match = buildMatch(groupId, groupName, config, teams, bench, players, 'live')
         set({ match, elapsedMs: 0, runningSince: config.scoring === 'tempo' ? null : Date.now() })
         void preloadMatchSounds(teams)
+        publish(match)
+        return match
+      },
+
+      startFrom: (saved) => {
+        const match: Match = {
+          ...saved,
+          status: 'live',
+          startedAt: Date.now(),
+          events: [],
+          flip: false,
+        }
+        set({
+          match,
+          elapsedMs: 0,
+          runningSince: match.config.scoring === 'tempo' ? null : Date.now(),
+        })
+        void preloadMatchSounds(match.teams)
         publish(match)
         return match
       },
