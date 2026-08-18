@@ -1,15 +1,9 @@
 /**
  * ─────────────────────────────────────────────────────────────
- *  CONECTAR O FIREBASE = COLAR O CONFIG AQUI. SÓ ISSO.
- *
- *  1. console.firebase.google.com → criar projeto
- *  2. Authentication → ativar provedor Google
- *  3. Firestore Database → criar banco
- *  4. Configurações do projeto → Seus apps → app Web → copiar o
- *     objeto firebaseConfig e colar no lugar do `null` abaixo.
- *
- *  Detalhes e regras de segurança: ver FIREBASE.md na raiz.
- *  Enquanto for `null`, o app roda 100% local (localStorage).
+ *  Config do Firebase — projeto temjogo-5271a (conectado em 18/08/2026).
+ *  Com este objeto preenchido o app usa Auth Google + Firestore;
+ *  se voltar a `null`, cai pro modo 100% local (localStorage).
+ *  Regras de segurança: firestore.rules (raiz). Guia: FIREBASE.md.
  * ─────────────────────────────────────────────────────────────
  */
 export const firebaseConfig: {
@@ -19,4 +13,13 @@ export const firebaseConfig: {
   storageBucket?: string
   messagingSenderId?: string
   appId: string
-} | null = null
+  measurementId?: string
+} | null = {
+  apiKey: 'AIzaSyAqnlFTOHFKFO23SkeBMQwciaFhxvTu1GY',
+  authDomain: 'temjogo-5271a.firebaseapp.com',
+  projectId: 'temjogo-5271a',
+  storageBucket: 'temjogo-5271a.firebasestorage.app',
+  messagingSenderId: '974874399622',
+  appId: '1:974874399622:web:cbd1b0d42eeaa9a6ec1207',
+  measurementId: 'G-RRQTKBHNRP',
+}

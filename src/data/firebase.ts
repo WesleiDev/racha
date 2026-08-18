@@ -4,6 +4,7 @@ import {
   getAuth,
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
   signOut as fbSignOut,
   type Auth,
 } from 'firebase/auth'
@@ -72,7 +73,17 @@ export const firebaseAdapter: DataAdapter = {
 
   async signIn() {
     const { auth, db } = init()
-    const cred = await signInWithPopup(auth, new GoogleAuthProvider())
+    let cred
+    try {
+      cred = await signInWithPopup(auth, new GoogleAuthProvider())
+    } catch (e) {
+      if ((e as { code?: string }).code === 'auth/popup-blocked') {
+        // popup bloqueado (Safari/PWA/webview) → segue pelo redirect; a página sai daqui
+        await signInWithRedirect(auth, new GoogleAuthProvider())
+        return new Promise<never>(() => {})
+      }
+      throw e
+    }
     const user = profileOf(cred.user)
     await setDoc(doc(db, 'users', user.id), user, { merge: true })
     return user
@@ -84,8 +95,13 @@ export const firebaseAdapter: DataAdapter = {
   },
 
   onAuthChange(cb) {
-    const { auth } = init()
-    return onAuthStateChanged(auth, (u) => cb(u ? profileOf(u) : null))
+    const { auth, db } = init()
+    return onAuthStateChanged(auth, (u) => {
+      const user = u ? profileOf(u) : null
+      // garante o perfil salvo também no fluxo por redirect (que não passa pelo signIn)
+      if (user) void setDoc(doc(db, 'users', user.id), user, { merge: true }).catch(() => {})
+      cb(user)
+    })
   },
 
   async listGroups(uid) {

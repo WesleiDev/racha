@@ -17,7 +17,8 @@ export function Login() {
     try {
       await signIn()
       nav('/grupos', { replace: true })
-    } catch {
+    } catch (e) {
+      console.error('[login]', e)
       setError(true)
     } finally {
       setBusy(false)
