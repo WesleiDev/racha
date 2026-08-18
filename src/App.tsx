@@ -36,9 +36,10 @@ function LoginRoute() {
 }
 
 function HomeRedirect() {
-  const { user, ready, groups } = useSession()
+  const { user, ready, groups, groupsLoaded } = useSession()
   if (!ready) return <div className="app-col bg-paper" />
   if (!user) return <Navigate to="/login" replace />
+  if (!groupsLoaded) return <div className="app-col bg-paper" />
   if (groups.length === 1) return <Navigate to={`/g/${groups[0].id}`} replace />
   return <Navigate to="/grupos" replace />
 }

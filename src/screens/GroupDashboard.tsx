@@ -4,7 +4,7 @@ import { Screen, Content } from '../components/layout'
 import { TabBar } from '../components/tabbar'
 import { Card, Dot, IconCircleButton, SectionLabel } from '../components/ui'
 import { Avatar } from '../components/player'
-import { IconGear } from '../components/icons'
+import { IconBack, IconGear } from '../components/icons'
 import { useSession } from '../state/session'
 import { useRoster } from '../state/roster'
 import { useLive } from '../state/live'
@@ -35,15 +35,24 @@ export function GroupDashboard() {
 
   return (
     <Screen>
-      <div className="px-5 pt-[max(18px,env(safe-area-inset-top))] pb-3 flex items-start justify-between">
-        <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-accent">
-            {sportLabel(group.sport)}
-            {group.schedule ? ` · ${group.schedule}` : ''}
+      <div className="px-5 pt-[max(18px,env(safe-area-inset-top))] pb-3 flex items-start justify-between gap-2">
+        <div className="flex items-start min-w-0">
+          <button
+            onClick={() => nav('/grupos')}
+            className="w-[34px] h-[34px] -ml-1.5 mt-1.5 rounded-full flex items-center justify-center text-ink active:bg-field flex-none"
+            aria-label="Meus grupos"
+          >
+            <IconBack size={20} />
+          </button>
+          <div className="min-w-0">
+            <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-accent">
+              {sportLabel(group.sport)}
+              {group.schedule ? ` · ${group.schedule}` : ''}
+            </div>
+            <h1 className="text-[28px] font-extrabold text-ink tracking-[-0.035em] leading-tight mt-0.5 truncate">
+              {group.name}
+            </h1>
           </div>
-          <h1 className="text-[28px] font-extrabold text-ink tracking-[-0.035em] leading-tight mt-0.5">
-            {group.name}
-          </h1>
         </div>
         <IconCircleButton onClick={() => nav(`/g/${groupId}/config`)} aria-label="Configurações">
           <IconGear size={17} />

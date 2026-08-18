@@ -9,6 +9,8 @@ interface SessionState {
   user: UserProfile | null
   ready: boolean
   groups: Group[]
+  /** grupos do usuário já carregados ao menos uma vez (evita redirect precoce na home) */
+  groupsLoaded: boolean
   init: () => void
   signIn: () => Promise<void>
   signOut: () => Promise<void>
@@ -24,6 +26,7 @@ export const useSession = create<SessionState>((set, get) => ({
   user: null,
   ready: false,
   groups: [],
+  groupsLoaded: false,
 
   init: () => {
     if (unsubAuth) return
@@ -33,7 +36,7 @@ export const useSession = create<SessionState>((set, get) => ({
         if (hasCloud) await migrateLocalToCloud(db, user).catch(() => 0)
         await get().refreshGroups()
       } else {
-        set({ groups: [] })
+        set({ groups: [], groupsLoaded: false })
       }
     })
   },
@@ -47,13 +50,13 @@ export const useSession = create<SessionState>((set, get) => ({
 
   signOut: async () => {
     await db.signOut()
-    set({ user: null, groups: [] })
+    set({ user: null, groups: [], groupsLoaded: false })
   },
 
   refreshGroups: async () => {
     const { user } = get()
     if (!user) return
-    set({ groups: await db.listGroups(user.id) })
+    set({ groups: await db.listGroups(user.id), groupsLoaded: true })
   },
 
   createGroup: async (name, sport, schedule) => {
