@@ -28,8 +28,8 @@ export function Login() {
     <Screen dark>
       <div className="flex-1" />
       <div className="px-7 pb-10">
-        <div className="text-white font-extrabold text-[62px] leading-[0.9] tracking-[-0.045em]">
-          Racha<span className="text-accent">.</span>
+        <div className="text-white font-extrabold text-[54px] leading-[0.9] tracking-[-0.045em]">
+          TemJogo<span className="text-accent">.</span>
         </div>
         <p className="text-ondark text-[19px] leading-snug mt-4 max-w-[260px]">
           Sorteia os times, marca o placar, guarda a resenha.

@@ -1,6 +1,8 @@
 import type { DataAdapter } from './adapter'
 import type { Group, Match, Player, UserProfile } from './types'
 
+// as chaves mantêm o prefixo "racha." de antes do rename pra TemJogo —
+// trocar apagaria os dados já salvos nos aparelhos
 const K = {
   user: 'racha.user',
   groups: 'racha.groups',

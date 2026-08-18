@@ -6,7 +6,7 @@ O app roda 100% local sem isso. Conectar liga: login Google de verdade, dados si
 
 ## Passo 1 — Criar o projeto
 
-1. [console.firebase.google.com](https://console.firebase.google.com) → **Adicionar projeto** (ex.: `racha-app`). Google Analytics pode desligar.
+1. [console.firebase.google.com](https://console.firebase.google.com) → **Adicionar projeto** (ex.: `temjogo-app`). Google Analytics pode desligar.
 
 ## Passo 2 — Ativar login Google
 
@@ -21,16 +21,16 @@ O app roda 100% local sem isso. Conectar liga: login Google de verdade, dados si
 
 ## Passo 4 — Registrar o app web e colar o config
 
-1. ⚙️ **Configurações do projeto** → **Seus apps** → ícone **`</>`** (Web) → registrar (ex.: `racha`)
+1. ⚙️ **Configurações do projeto** → **Seus apps** → ícone **`</>`** (Web) → registrar (ex.: `temjogo`)
 2. Copie o objeto `firebaseConfig` que aparece
 3. Cole em [`src/data/firebaseConfig.ts`](src/data/firebaseConfig.ts), trocando o `null`:
 
 ```ts
 export const firebaseConfig = {
   apiKey: 'AIza…',
-  authDomain: 'racha-app.firebaseapp.com',
-  projectId: 'racha-app',
-  storageBucket: 'racha-app.firebasestorage.app',
+  authDomain: 'temjogo-app.firebaseapp.com',
+  projectId: 'temjogo-app',
+  storageBucket: 'temjogo-app.firebasestorage.app',
   messagingSenderId: '…',
   appId: '1:…:web:…',
 }
@@ -47,7 +47,7 @@ npx firebase-tools init hosting   # public: dist · SPA (rewrite p/ index.html):
 npx firebase-tools deploy
 ```
 
-Sai em `https://racha-app.web.app`. Depois, em **Authentication → Settings → Domínios autorizados**, confirme que o domínio do Hosting está na lista (o do próprio projeto já vem).
+Sai em `https://temjogo-app.web.app`. Depois, em **Authentication → Settings → Domínios autorizados**, confirme que o domínio do Hosting está na lista (o do próprio projeto já vem).
 
 ## Notas
 

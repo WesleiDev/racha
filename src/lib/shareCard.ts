@@ -38,8 +38,8 @@ export async function drawResultCard(
   g.fillText(spaced(eyebrow, 0.08), pad, pad + 30)
 
   g.fillStyle = '#FFFFFF'
-  g.font = '800 52px "Bricolage Grotesque"'
-  const wm = 'Racha'
+  g.font = '800 44px "Bricolage Grotesque"'
+  const wm = 'TemJogo'
   const wmWidth = g.measureText(wm).width
   g.fillText(wm, W - pad - wmWidth - 26, pad + 36)
   g.fillStyle = '#7C4DFF'
@@ -108,7 +108,7 @@ export async function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob> {
 /** tenta Web Share com arquivo; senão baixa o PNG */
 export async function shareCard(canvas: HTMLCanvasElement, text: string): Promise<'shared' | 'downloaded'> {
   const blob = await canvasToBlob(canvas)
-  const file = new File([blob], 'racha-resultado.png', { type: 'image/png' })
+  const file = new File([blob], 'temjogo-resultado.png', { type: 'image/png' })
   if (navigator.canShare?.({ files: [file] })) {
     try {
       await navigator.share({ files: [file], text })

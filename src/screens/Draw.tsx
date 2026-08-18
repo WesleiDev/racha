@@ -343,7 +343,7 @@ export function Draw() {
   const begin = () => {
     ensureCtx() // gesto do usuário → áudio liberado
     const group = groups.find((g) => g.id === groupId)
-    startMatch(groupId, group?.name ?? 'Racha', config, teams, bench, players)
+    startMatch(groupId, group?.name ?? 'TemJogo', config, teams, bench, players)
     nav(`/g/${groupId}/placar`)
   }
 

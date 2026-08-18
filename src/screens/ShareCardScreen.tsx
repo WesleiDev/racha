@@ -35,8 +35,8 @@ export function ShareCardScreen() {
       .join(' · ')
     const text =
       winner !== null
-        ? `${match.teams[winner].name} levou o rachão! ${sets} 🏆 — via Racha`
-        : `Deu empate no rachão: ${sets} — via Racha`
+        ? `${match.teams[winner].name} levou o rachão! ${sets} 🏆 — via TemJogo`
+        : `Deu empate no rachão: ${sets} — via TemJogo`
     const result = await shareCard(canvasRef.current, text)
     setStatus(result === 'shared' ? null : 'Imagem baixada — cola lá no grupo!')
   }
@@ -47,7 +47,7 @@ export function ShareCardScreen() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = 'racha-resultado.png'
+    a.download = 'temjogo-resultado.png'
     a.click()
     setTimeout(() => URL.revokeObjectURL(url), 5000)
     setStatus('Imagem salva!')

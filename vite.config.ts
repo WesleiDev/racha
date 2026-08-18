@@ -11,8 +11,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
-        name: 'Racha',
-        short_name: 'Racha',
+        name: 'TemJogo',
+        short_name: 'TemJogo',
         description: 'Sorteia os times, marca o placar, guarda a resenha.',
         lang: 'pt-BR',
         display: 'standalone',

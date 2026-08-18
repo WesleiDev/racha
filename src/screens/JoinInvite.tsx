@@ -38,7 +38,7 @@ export function JoinInvite() {
     <Screen dark>
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-3">
         <div className="text-white font-extrabold text-[34px] tracking-[-0.04em]">
-          Racha<span className="text-accent">.</span>
+          TemJogo<span className="text-accent">.</span>
         </div>
         {notFound ? (
           <>

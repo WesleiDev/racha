@@ -31,7 +31,7 @@ export function LiveView() {
     return (
       <div className="fixed inset-0 bg-board flex flex-col items-center justify-center gap-2 px-8 text-center">
         <div className="text-white text-[20px] font-extrabold tracking-[-0.02em]">
-          Racha<span className="text-accent">.</span>
+          TemJogo<span className="text-accent">.</span>
         </div>
         <div className="text-ondark text-[14px]">Ninguém jogando nesse link agora.</div>
         <div className="text-ondark-dim text-[12px]">Pede o link novo pra quem tá com o placar.</div>
