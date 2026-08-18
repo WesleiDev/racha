@@ -16,7 +16,10 @@ export const firebaseConfig: {
   measurementId?: string
 } | null = {
   apiKey: 'AIzaSyAqnlFTOHFKFO23SkeBMQwciaFhxvTu1GY',
-  authDomain: 'temjogo-5271a.firebaseapp.com',
+  // domínio próprio: mantém o login na mesma origem do app — Safari/iPhone
+  // bloqueiam armazenamento de terceiros e derrubariam o fluxo por redirect.
+  // Exige https://temjogo.app/__/auth/handler nas URIs autorizadas do cliente OAuth.
+  authDomain: 'temjogo.app',
   projectId: 'temjogo-5271a',
   storageBucket: 'temjogo-5271a.firebasestorage.app',
   messagingSenderId: '974874399622',
