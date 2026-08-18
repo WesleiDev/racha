@@ -8,7 +8,7 @@
       <path d="M256 104 A152 152 0 0 1 256 408 Z" fill="#FF6A1F"/>
       <circle cx="256" cy="180" r="76" fill="#FF6A1F"/>
       <circle cx="256" cy="332" r="76" fill="#7C4DFF"/>
-      <path d="M256 96 A76 76 0 0 0 256 256 A76 76 0 0 1 256 416" fill="none" stroke="#15141A" stroke-width="11"/>
+      <path d="M256 104 A76 76 0 0 0 256 256 A76 76 0 0 1 256 408" fill="none" stroke="#15141A" stroke-width="12"/>
     </g>
   </g>
 </svg>
