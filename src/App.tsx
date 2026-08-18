@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom'
 import { useSession } from './state/session'
+import { safePath } from './lib/nav'
 import { Login } from './screens/Login'
 import { Groups } from './screens/Groups'
 import { GroupDashboard } from './screens/GroupDashboard'
@@ -23,14 +24,18 @@ function RequireAuth({ children }: { children: ReactNode }) {
   const { user, ready } = useSession()
   const loc = useLocation()
   if (!ready) return <div className="app-col bg-paper" />
-  if (!user) return <Navigate to="/login" replace state={{ from: loc.pathname }} />
+  // guarda o destino: depois do login o usuário volta pra onde queria ir
+  if (!user) {
+    const back = encodeURIComponent(loc.pathname + loc.search)
+    return <Navigate to={`/login?depois=${back}`} replace />
+  }
   return <>{children}</>
 }
 
 function LoginRoute() {
   const { user, ready } = useSession()
   const [params] = useSearchParams()
-  const after = params.get('depois')
+  const after = safePath(params.get('depois'))
   if (ready && user) return <Navigate to={after ?? '/grupos'} replace />
   return <Login />
 }

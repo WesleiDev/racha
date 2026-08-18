@@ -87,12 +87,17 @@ export function Groups() {
     if (!t) return
     setBusy(true)
     setJoinError(false)
-    const g = await joinByToken(t)
-    setBusy(false)
-    if (g) {
-      setJoining(false)
-      nav(`/g/${g.id}`)
-    } else setJoinError(true)
+    try {
+      const groupId = await joinByToken(t)
+      if (groupId) {
+        setJoining(false)
+        nav(`/g/${groupId}`)
+      } else setJoinError(true)
+    } catch {
+      setJoinError(true)
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (

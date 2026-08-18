@@ -20,6 +20,7 @@ export function GroupDashboard() {
   const { groupId = '' } = useParams()
   const nav = useNavigate()
   const group = useSession((s) => s.groups.find((g) => g.id === groupId))
+  const groupsLoaded = useSession((s) => s.groupsLoaded)
   const { matches, load, groupId: loaded } = useRoster()
   const liveMatch = useLive((s) => s.match)
 
@@ -27,7 +28,29 @@ export function GroupDashboard() {
     if (groupId && loaded !== groupId) void load(groupId)
   }, [groupId, loaded, load])
 
-  if (!group) return <Screen />
+  if (!group) {
+    // ainda sincronizando (ex.: acabou de aceitar um convite) ou grupo fora de alcance
+    return (
+      <Screen>
+        <div className="flex-1 flex flex-col items-center justify-center gap-3 px-8 text-center">
+          {!groupsLoaded ? (
+            <div className="text-[14px] text-ter">carregando o grupo…</div>
+          ) : (
+            <>
+              <div className="text-[38px]">🤔</div>
+              <div className="text-[16.5px] font-bold text-ink">Grupo não encontrado</div>
+              <div className="text-[13.5px] text-ter max-w-[260px] leading-relaxed">
+                Pode ser que você não faça mais parte dele, ou o link esteja errado.
+              </div>
+              <button onClick={() => nav('/grupos')} className="text-accent text-[14px] font-bold mt-1">
+                ver meus grupos
+              </button>
+            </>
+          )}
+        </div>
+      </Screen>
+    )
+  }
 
   const last = matches.find((m) => m.status === 'finished')
   const ranking = computeRanking(matches).slice(0, 3)

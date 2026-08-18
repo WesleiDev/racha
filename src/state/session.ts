@@ -17,7 +17,8 @@ interface SessionState {
   refreshGroups: () => Promise<void>
   createGroup: (name: string, sport: Sport, schedule: string) => Promise<Group>
   updateGroup: (group: Group) => Promise<void>
-  joinByToken: (token: string) => Promise<Group | null>
+  /** aceita o convite e devolve o id do grupo (null = token inválido) */
+  joinByToken: (token: string) => Promise<string | null>
 }
 
 let unsubAuth: (() => void) | null = null
@@ -90,8 +91,9 @@ export const useSession = create<SessionState>((set, get) => ({
     const found = await db.findGroupByInvite(token.trim().toLowerCase())
     if (!found) return null
     await db.joinGroup(found.id, user.id)
-    await get().refreshGroups()
-    return get().groups.find((g) => g.id === found.id) ?? null
+    // o refresh pode demorar (ou falhar offline) — o id já basta pra navegar
+    await get().refreshGroups().catch(() => {})
+    return found.id
   },
 }))
 
