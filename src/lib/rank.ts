@@ -18,6 +18,15 @@ export interface Highlights {
   blowout: { diff: number; score: string } | null
 }
 
+/**
+ * Quais times realmente entraram em quadra.
+ * O placar joga sempre com dois; num sorteio de 3 ou 4 times, os demais
+ * ficaram de fora e não podem contar jogo (nem derrota) no ranking.
+ */
+export function playingTeams(m: Match): number[] {
+  return m.teams.length <= 2 ? m.teams.map((_, i) => i) : [0, 1]
+}
+
 export function matchWinner(m: Match): number | null {
   const board = computeBoard(m.config, m.events, m.serveStart, m.teams.length)
   if (board.winner !== null) return board.winner
@@ -39,7 +48,9 @@ export function computeRanking(matches: Match[]): RankRow[] {
 
   for (const m of finished) {
     const winner = matchWinner(m)
-    m.teams.forEach((team, t) => {
+    for (const t of playingTeams(m)) {
+      const team = m.teams[t]
+      if (!team) continue
       for (const pid of team.playerIds) {
         const snap = m.players[pid] ?? { name: '?', color: '#9A97A5' }
         const row = rows.get(pid) ?? {
@@ -62,7 +73,7 @@ export function computeRanking(matches: Match[]): RankRow[] {
         }
         rows.set(pid, row)
       }
-    })
+    }
   }
 
   const out = [...rows.values()]
