@@ -64,6 +64,7 @@ export function Groups() {
   const { user, groups, createGroup, joinByToken, signOut } = useSession()
   const [creating, setCreating] = useState(false)
   const [joining, setJoining] = useState(false)
+  const [account, setAccount] = useState(false)
   const [name, setName] = useState('')
   const [sport, setSport] = useState<Sport>('volei')
   const [schedule, setSchedule] = useState('')
@@ -105,11 +106,15 @@ export function Groups() {
       <div className="px-5 pt-[max(18px,env(safe-area-inset-top))] pb-3 flex items-center justify-between">
         <h1 className="text-[27px] font-extrabold text-ink tracking-[-0.035em]">Meus grupos</h1>
         <button
-          onClick={() => void signOut().then(() => nav('/login', { replace: true }))}
-          className="w-9 h-9 rounded-full bg-[#DDD8F5] text-accent-press text-[13px] font-bold flex items-center justify-center"
-          title="Sair"
+          onClick={() => setAccount(true)}
+          className="w-9 h-9 rounded-full bg-[#DDD8F5] text-accent-press text-[13px] font-bold flex items-center justify-center overflow-hidden"
+          aria-label="Sua conta"
         >
-          {userInitials}
+          {user?.photoUrl ? (
+            <img src={user.photoUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+          ) : (
+            userInitials
+          )}
         </button>
       </div>
 
@@ -189,6 +194,41 @@ export function Groups() {
               Criar grupo
             </Button>
           </div>
+        </div>
+      </Sheet>
+
+      {/* conta */}
+      <Sheet open={account} onClose={() => setAccount(false)}>
+        <div className="px-5 pt-3">
+          <div className="flex items-center gap-3.5">
+            <span className="w-14 h-14 rounded-full bg-[#DDD8F5] text-accent-press text-[19px] font-bold flex items-center justify-center flex-none overflow-hidden">
+              {user?.photoUrl ? (
+                <img src={user.photoUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                userInitials
+              )}
+            </span>
+            <div className="min-w-0">
+              <div className="text-[17px] font-bold text-ink truncate">{user?.name ?? 'Você'}</div>
+              {user?.email && <div className="text-[13px] text-ter truncate">{user.email}</div>}
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-col gap-2.5">
+            <Button variant="outline" size="md" onClick={() => setAccount(false)}>
+              Continuar como {user?.name?.split(' ')[0] ?? 'você'}
+            </Button>
+            <Button
+              variant="outline"
+              size="md"
+              className="!text-danger !border-danger/40"
+              onClick={() => void signOut().then(() => nav('/login', { replace: true }))}
+            >
+              Sair da conta
+            </Button>
+          </div>
+
+          <div className="text-[11.5px] text-dis text-center mt-4">TemJogo · versão {__BUILD_TIME__}</div>
         </div>
       </Sheet>
 
