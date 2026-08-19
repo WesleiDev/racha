@@ -32,9 +32,20 @@ interface Reporter {
 
 let pending: Promise<Reporter | null> | null = null
 
+/**
+ * Só a produção manda evento. Desenvolvimento (dev server ou preview local)
+ * ia contar como usuário ativo e sujar as métricas do app publicado.
+ */
+function isProduction(): boolean {
+  if (!import.meta.env.PROD) return false
+  const host = location.hostname
+  return host !== 'localhost' && host !== '127.0.0.1' && !host.endsWith('.local')
+}
+
 function reporter(): Promise<Reporter | null> {
   if (pending) return pending
   pending = (async () => {
+    if (!isProduction()) return null
     if (!firebaseConfig?.measurementId) return null
     try {
       const { isSupported, getAnalytics, logEvent } = await import('firebase/analytics')
