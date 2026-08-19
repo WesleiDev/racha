@@ -6,6 +6,7 @@ import { BoardHalves } from '../components/board'
 import { computeBoard } from '../lib/scoring'
 import { useWakeLock } from '../lib/device'
 import { teamColor } from '../lib/colors'
+import { track } from '../lib/analytics'
 
 /** placar ao vivo do espectador — link público, só leitura, tempo real */
 export function LiveView() {
@@ -16,6 +17,7 @@ export function LiveView() {
 
   useEffect(() => {
     document.body.style.background = '#0B0A0F'
+    track('placar_ao_vivo_aberto')
     const stop = db.watchLive(token, (m) => {
       setMatch(m)
       setLoaded(true)

@@ -2,6 +2,7 @@ import { useEffect, type ReactNode } from 'react'
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useSearchParams } from 'react-router-dom'
 import { useSession } from './state/session'
 import { safePath } from './lib/nav'
+import { trackScreen } from './lib/analytics'
 import { Login } from './screens/Login'
 import { Groups } from './screens/Groups'
 import { GroupDashboard } from './screens/GroupDashboard'
@@ -50,12 +51,20 @@ function HomeRedirect() {
   return <Navigate to="/grupos" replace />
 }
 
+/** registra a tela a cada navegação (o SPA não dispara page_view sozinho) */
+function ScreenTracker() {
+  const loc = useLocation()
+  useEffect(() => trackScreen(loc.pathname), [loc.pathname])
+  return null
+}
+
 export function App() {
   const init = useSession((s) => s.init)
   useEffect(() => init(), [init])
 
   return (
     <BrowserRouter>
+      <ScreenTracker />
       <Routes>
         <Route path="/" element={<HomeRedirect />} />
         <Route path="/login" element={<LoginRoute />} />

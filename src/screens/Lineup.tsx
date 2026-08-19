@@ -15,6 +15,7 @@ import { fmtDayTime } from '../lib/format'
 import { ensureCtx } from '../lib/audio'
 import { boardOf, allSets } from '../lib/scoring'
 import { matchWinner } from '../lib/rank'
+import { track } from '../lib/analytics'
 
 /** anotar o placar final de um jogo que rolou sem ninguém marcando */
 function ManualResult({
@@ -234,6 +235,7 @@ export function Lineup() {
 
   const share = async () => {
     const r = await shareLineup(session, url)
+    track('compartilhou_times', { como: r, times: session.teams.length })
     if (r === 'copied') setMsg('Copiado! É só colar no grupo.')
     if (r === 'failed') setMsg('Não rolou copiar — o link tá logo abaixo.')
     if (r !== 'shared') setTimeout(() => setMsg(null), 4000)
@@ -411,6 +413,7 @@ export function Lineup() {
             const game = buildManualGame(session, idx, sets)
             try {
               await saveMatch(game)
+              track('resultado_anotado', { sets: sets.length, esporte: session.config.sport })
               setNoting(false)
               setMsg('Resultado anotado!')
             } catch (e) {

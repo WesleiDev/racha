@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import { db } from '../data'
 import type { Match, MatchConfig, Player, Team } from '../data/types'
 import { buildMatch } from '../lib/match'
+import { track } from '../lib/analytics'
 import { computeBoard } from '../lib/scoring'
 import { playTeamSound, preloadMatchSounds } from '../lib/audio'
 
@@ -47,6 +48,7 @@ export const useLive = create<LiveState>()(
         set({ match, elapsedMs: 0, runningSince: config.scoring === 'tempo' ? null : Date.now() })
         void preloadMatchSounds(teams)
         publish(match)
+        track('partida_iniciada', { esporte: config.sport, modo: config.scoring, times: teams.length, da_rodada: false })
         return match
       },
 
@@ -73,6 +75,12 @@ export const useLive = create<LiveState>()(
         })
         void preloadMatchSounds(teams)
         publish(match)
+        track('partida_iniciada', {
+          esporte: session.config.sport,
+          modo: session.config.scoring,
+          times: session.teams.length,
+          da_rodada: true,
+        })
         return match
       },
 
@@ -139,6 +147,12 @@ export const useLive = create<LiveState>()(
         }
         set({ match: finished, elapsedMs: elapsedMs + extra, runningSince: null })
         void db.clearLive(match.liveToken).catch(() => {})
+        track('partida_encerrada', {
+          esporte: match.config.sport,
+          modo: match.config.scoring,
+          pontos: match.events.filter((e) => e.type === 'point').length,
+          minutos: Math.round((Date.now() - match.startedAt) / 60000),
+        })
         return finished
       },
 

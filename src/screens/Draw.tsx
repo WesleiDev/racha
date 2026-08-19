@@ -37,6 +37,7 @@ import { balance } from '../lib/draw'
 import { newId } from '../lib/id'
 import { buildMatch } from '../lib/match'
 import { db } from '../data'
+import { track } from '../lib/analytics'
 import { fmtStars } from '../lib/format'
 import { MicPermissionError, playLibrary, playRecorded, recordClip, SOUND_LIBRARY, ensureCtx } from '../lib/audio'
 
@@ -201,6 +202,7 @@ function SoundSheet({ teamIndex, onClose, admin }: { teamIndex: number | null; o
     const saved = { id: newId(), name: `Grito da galera ${n}`, dataUrl, createdAt: Date.now() }
     try {
       await addSound(saved)
+      track('som_gravado')
     } catch {
       /* sem rede: segue com o som na partida atual mesmo */
     }
@@ -420,6 +422,7 @@ export function Draw() {
 
   const againstRepeat = () => {
     const changed = redraw(players)
+    track('re_sorteio', { mudou: changed, times: teams.length })
     setStuck(!changed)
     if (!changed) setTimeout(() => setStuck(false), 5000)
   }
@@ -443,6 +446,7 @@ export function Draw() {
     }
     await saveMatch(lineup)
     void db.publishLive(lineup).catch(() => {})
+    track('escalacao_salva', { times: teams.length, jogadores: present.length })
     reset()
     nav(`/g/${groupId}/escalacao/${lineup.id}`, { replace: true })
   }

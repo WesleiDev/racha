@@ -4,6 +4,7 @@ import type { Group, Sport, UserProfile } from '../data/types'
 import { defaultConfig } from '../data/types'
 import { newId, newToken } from '../lib/id'
 import { migrateLocalToCloud } from '../data/migrate'
+import { track } from '../lib/analytics'
 
 interface SessionState {
   user: UserProfile | null
@@ -45,6 +46,7 @@ export const useSession = create<SessionState>((set, get) => ({
   signIn: async () => {
     const user = await db.signIn()
     set({ user })
+    track('login')
     if (hasCloud) await migrateLocalToCloud(db, user).catch(() => 0)
     await get().refreshGroups()
   },
@@ -83,6 +85,7 @@ export const useSession = create<SessionState>((set, get) => ({
     }
     await db.saveGroup(group)
     set({ groups: [...get().groups, group] })
+    track('grupo_criado', { esporte: sport })
     return group
   },
 
@@ -97,6 +100,7 @@ export const useSession = create<SessionState>((set, get) => ({
     const found = await db.findGroupByInvite(token.trim().toLowerCase())
     if (!found) return null
     await db.joinGroup(found.id, user.id)
+    track('entrou_por_convite')
     // o refresh pode demorar (ou falhar offline) — o id já basta pra navegar
     await get().refreshGroups().catch(() => {})
     return found.id
