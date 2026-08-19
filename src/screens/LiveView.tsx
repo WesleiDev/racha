@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 import { db } from '../data'
 import type { Match } from '../data/types'
 import { BoardHalves } from '../components/board'
-import { computeBoard } from '../lib/scoring'
+import { computeBoard, usesSets } from '../lib/scoring'
 import { useWakeLock } from '../lib/device'
 import { teamColor } from '../lib/colors'
 import { track } from '../lib/analytics'
@@ -112,7 +112,7 @@ export function LiveView() {
       <div className="absolute bottom-[max(12px,env(safe-area-inset-bottom))] left-0 right-0 text-center pointer-events-none">
         <div className="text-ondark-ter text-[12px] font-semibold">
           {match.groupName}
-          {match.config.scoring === 'sets' ? ` · ${board.setIndex}º set` : ''} · só leitura
+          {usesSets(match.config) ? ` · ${board.setIndex}º set` : ''} · só leitura
         </div>
         <div className="text-ondark-faint text-[11px] num num-112 mt-0.5">
           {location.host}/ao-vivo/{token}

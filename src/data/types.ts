@@ -1,5 +1,6 @@
-export type Sport = 'volei' | 'futsal' | 'basquete' | 'beach' | 'outro'
-export type ScoringMode = 'sets' | 'tempo' | 'livre'
+export type Sport = 'volei' | 'futsal' | 'basquete' | 'beach' | 'padel' | 'tenis' | 'outro'
+/** tenis = ponto→game→set (tênis, padel, beach tennis) */
+export type ScoringMode = 'sets' | 'tenis' | 'tempo' | 'livre'
 
 export interface UserProfile {
   id: string
@@ -22,6 +23,16 @@ export interface MatchConfig {
   timeMinutes: number
   /** modo livre: primeiro a X pontos; null = contagem aberta */
   freeTarget: number | null
+
+  /* ---- modo tênis/padel/beach tennis ---- */
+  /** games para vencer o set (6 no padrão; 4 em set curto) */
+  gamesPerSet?: number
+  /** ponto de ouro: em 40-40 o próximo ponto decide o game (sem vantagem) */
+  noAd?: boolean
+  /** set decisivo vira super tiebreak em vez de set completo */
+  superTiebreakFinal?: boolean
+  /** pontos do super tiebreak decisivo */
+  superTiebreakPoints?: number
 }
 
 export interface Group {
@@ -119,6 +130,8 @@ export const SPORTS: { id: Sport; label: string }[] = [
   { id: 'futsal', label: 'Futsal' },
   { id: 'basquete', label: 'Basquete' },
   { id: 'beach', label: 'Beach tennis' },
+  { id: 'padel', label: 'Padel' },
+  { id: 'tenis', label: 'Tênis' },
   { id: 'outro', label: 'Outro' },
 ]
 
@@ -141,7 +154,23 @@ export function defaultConfig(sport: Sport): MatchConfig {
   }
   if (sport === 'futsal') return { ...base, playersPerTeam: 5, scoring: 'tempo' }
   if (sport === 'basquete') return { ...base, playersPerTeam: 5, scoring: 'tempo' }
-  if (sport === 'beach') return { ...base, playersPerTeam: 2, setPoints: 21 }
+
+  // raquete: ponto → game → set. Super tiebreak no decisivo é o formato
+  // mais comum no amador (padel e beach tennis quase sempre; tênis às vezes)
+  const raquete: MatchConfig = {
+    ...base,
+    scoring: 'tenis',
+    playersPerTeam: 2,
+    gamesPerSet: 6,
+    noAd: false,
+    tiebreakPoints: 7,
+    superTiebreakFinal: true,
+    superTiebreakPoints: 10,
+  }
+  if (sport === 'beach') return { ...raquete, noAd: true }
+  if (sport === 'padel') return { ...raquete, noAd: true }
+  if (sport === 'tenis') return { ...raquete, playersPerTeam: 1 }
+
   if (sport === 'outro') return { ...base, playersPerTeam: 5, scoring: 'livre' }
   return base
 }

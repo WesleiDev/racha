@@ -4,7 +4,7 @@ import { Screen, Header, Content } from '../components/layout'
 import { Card, Dot, SectionLabel } from '../components/ui'
 import { useRoster } from '../state/roster'
 import { teamColor } from '../lib/colors'
-import { boardOf, allSets } from '../lib/scoring'
+import { boardOf, allSets, usesSets } from '../lib/scoring'
 import { fmtDay, fmtDuration } from '../lib/format'
 import { sportLabel } from '../data/types'
 import type { Match } from '../data/types'
@@ -76,7 +76,7 @@ export function MatchDetail() {
   const board = boardOf(match)
   const manual = Boolean(match.manualSets?.length)
   const sets = allSets(board)
-  const score = match.config.scoring === 'sets' ? board.setsWon : sets.at(-1) ?? [0, 0]
+  const score = usesSets(match.config) ? board.setsWon : sets.at(-1) ?? [0, 0]
   const dur = ((match.finishedAt ?? match.startedAt) - match.startedAt) / 1000
   const short = (i: number) => match.teams[i].name.replace(/^Time /, '')
   const nameOf = (pid: string) => match.players[pid]?.name ?? players.find((p) => p.id === pid)?.name ?? '?'
@@ -89,7 +89,7 @@ export function MatchDetail() {
         sub={`${fmtDay(match.startedAt)} · ${sportLabel(match.config.sport).toLowerCase()} · ${fmtDuration(dur)}`}
       />
       <Content className="flex flex-col gap-3 pb-6">
-        {match.config.scoring === 'sets' && sets.length > 0 && (
+        {usesSets(match.config) && sets.length > 0 && (
           <Card className="p-4">
             <SectionLabel>Sets</SectionLabel>
             <div className="grid grid-cols-3 gap-2 mt-2.5">
@@ -122,7 +122,7 @@ export function MatchDetail() {
         ) : (
           <Card className="p-4">
             <SectionLabel>
-              Corrida do placar{match.config.scoring === 'sets' ? ` · ${setIdx + 1}º set` : ''}
+              Corrida do placar{usesSets(match.config) ? ` · ${setIdx + 1}º set` : ''}
             </SectionLabel>
             <div className="mt-3">
               <RaceChart match={match} setIndex={setIdx} />

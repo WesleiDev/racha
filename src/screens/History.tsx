@@ -5,7 +5,7 @@ import { TabBar } from '../components/tabbar'
 import { Card, Dot, EmptyState } from '../components/ui'
 import { useRoster } from '../state/roster'
 import { teamColor } from '../lib/colors'
-import { boardOf, allSets } from '../lib/scoring'
+import { boardOf, allSets, usesSets } from '../lib/scoring'
 import { fmtDayParts, fmtDuration } from '../lib/format'
 import { sportLabel } from '../data/types'
 
@@ -34,7 +34,7 @@ export function History() {
         {finished.map((m) => {
           const board = boardOf(m)
           const sets = allSets(board)
-          const score = m.config.scoring === 'sets' ? board.setsWon : sets.at(-1) ?? [0, 0]
+          const score = usesSets(m.config) ? board.setsWon : sets.at(-1) ?? [0, 0]
           const { day, month } = fmtDayParts(m.startedAt)
           const dur = ((m.finishedAt ?? m.startedAt) - m.startedAt) / 1000
           return (
@@ -49,7 +49,7 @@ export function History() {
                 </div>
                 <div className="text-[12px] text-ter mt-0.5">
                   {sportLabel(m.config.sport).toLowerCase()}
-                  {m.config.scoring === 'sets' ? ` · ${sets.length} ${sets.length === 1 ? 'set' : 'sets'}` : ''} ·{' '}
+                  {usesSets(m.config) ? ` · ${sets.length} ${sets.length === 1 ? 'set' : 'sets'}` : ''} ·{' '}
                   {fmtDuration(dur)}
                 </div>
               </div>

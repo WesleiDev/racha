@@ -76,12 +76,84 @@ export function NewMatch() {
           <Segmented<ScoringMode>
             options={[
               { id: 'sets', label: 'Sets' },
+              { id: 'tenis', label: 'Tênis' },
               { id: 'tempo', label: 'Tempo' },
               { id: 'livre', label: 'Livre' },
             ]}
             value={config.scoring}
             onChange={(v) => setConfig({ scoring: v })}
           />
+
+          {config.scoring === 'tenis' && (
+            <Card className="px-4 mt-2.5 divide-y divide-field">
+              <div className="py-3 text-[12.5px] text-ter leading-snug">
+                Contagem de raquete: 15, 30, 40, vantagem. Game, set e partida.
+              </div>
+              <div className={row}>
+                <span className="text-[14.5px] text-ink font-medium">Games por set</span>
+                <Stepper
+                  value={config.gamesPerSet ?? 6}
+                  min={3}
+                  max={9}
+                  onChange={(v) => setConfig({ gamesPerSet: v })}
+                />
+              </div>
+              <div className={row}>
+                <div>
+                  <div className="text-[14.5px] text-ink font-medium">Ponto de ouro</div>
+                  <div className="text-[12px] text-ter">em 40-40 o próximo ponto decide (sem vantagem)</div>
+                </div>
+                <Toggle on={Boolean(config.noAd)} onChange={(v) => setConfig({ noAd: v })} />
+              </div>
+              <div className={row}>
+                <div>
+                  <div className="text-[14.5px] text-ink font-medium">Tiebreak</div>
+                  <div className="text-[12px] text-ter">
+                    em {config.gamesPerSet ?? 6}-{config.gamesPerSet ?? 6}
+                  </div>
+                </div>
+                <Stepper value={config.tiebreakPoints} min={5} max={12} onChange={(v) => setConfig({ tiebreakPoints: v })} />
+              </div>
+              <div className={row}>
+                <span className="text-[14.5px] text-ink font-medium">Melhor de</span>
+                <div className="flex items-center gap-2">
+                  {[1, 3, 5].map((n) => (
+                    <button
+                      key={n}
+                      onClick={() => setConfig({ bestOf: n })}
+                      className={`h-9 px-3 rounded-[10px] text-[13.5px] font-bold ${
+                        config.bestOf === n ? 'bg-ink text-white' : 'bg-field text-sec'
+                      }`}
+                    >
+                      {n} {n === 1 ? 'set' : 'sets'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {config.bestOf > 1 && (
+                <div className={row}>
+                  <div>
+                    <div className="text-[14.5px] text-ink font-medium">Super tiebreak no decisivo</div>
+                    <div className="text-[12px] text-ter">último set vira tiebreak de {config.superTiebreakPoints ?? 10}</div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Toggle
+                      on={Boolean(config.superTiebreakFinal)}
+                      onChange={(v) => setConfig({ superTiebreakFinal: v })}
+                    />
+                    {config.superTiebreakFinal && (
+                      <Stepper
+                        value={config.superTiebreakPoints ?? 10}
+                        min={5}
+                        max={21}
+                        onChange={(v) => setConfig({ superTiebreakPoints: v })}
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+            </Card>
+          )}
 
           {config.scoring === 'sets' && (
             <Card className="px-4 mt-2.5 divide-y divide-field">

@@ -13,7 +13,7 @@ import { shareLineup, buildManualGame } from '../lib/match'
 import { sportLabel } from '../data/types'
 import { fmtDayTime } from '../lib/format'
 import { ensureCtx } from '../lib/audio'
-import { boardOf, allSets } from '../lib/scoring'
+import { boardOf, allSets, usesSets } from '../lib/scoring'
 import { matchWinner } from '../lib/rank'
 import { track } from '../lib/analytics'
 
@@ -31,7 +31,7 @@ function ManualResult({
     session.teams.slice(i + 1).map((b, k) => ({ i, j: i + 1 + k, a, b })),
   )
   const [pair, setPair] = useState(0)
-  const porSets = session.config.scoring === 'sets'
+  const porSets = usesSets(session.config)
   const [sets, setSets] = useState<string[][]>([['', '']])
   const [busy, setBusy] = useState(false)
 
@@ -149,7 +149,7 @@ function GameRow({ game, onOpen }: { game: Match; onOpen: () => void }) {
   const board = boardOf(game)
   const live = game.status === 'live'
   // jogo rolando: mostra o set atual (sets ganhos ainda são 0-0 no primeiro set)
-  const score = live ? board.current : game.config.scoring === 'sets' ? board.setsWon : allSets(board).at(-1) ?? [0, 0]
+  const score = live ? board.current : usesSets(game.config) ? board.setsWon : allSets(board).at(-1) ?? [0, 0]
   const setsBadge = live && board.closedSets.length > 0 ? board.setsWon.join('–') : null
   const winner = game.status === 'finished' ? matchWinner(game) : null
 

@@ -1,6 +1,6 @@
 import type { Match } from '../data/types'
 import { teamColor } from './colors'
-import { boardOf, allSets } from './scoring'
+import { boardOf, allSets, usesSets } from './scoring'
 import { fmtDay } from './format'
 
 const W = 1080
@@ -27,7 +27,7 @@ export async function drawResultCard(
   const pad = 66
   const board = boardOf(match)
   const sets = allSets(board)
-  const scores = match.config.scoring === 'sets' ? board.setsWon : sets[sets.length - 1] ?? [0, 0]
+  const scores = usesSets(match.config) ? board.setsWon : sets[sets.length - 1] ?? [0, 0]
   const winner = board.winner ?? (scores[0] === scores[1] ? -1 : scores.indexOf(Math.max(...scores)))
 
   // topo: eyebrow + wordmark

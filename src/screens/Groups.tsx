@@ -8,7 +8,7 @@ import type { Group, Match, Sport } from '../data/types'
 import { SPORTS, sportLabel } from '../data/types'
 import { SPORT_ICONS } from '../components/icons'
 import { teamColor } from '../lib/colors'
-import { boardOf } from '../lib/scoring'
+import { boardOf, usesSets } from '../lib/scoring'
 import { initials } from '../lib/colors'
 
 function GroupCard({ group }: { group: Group }) {
@@ -49,7 +49,7 @@ function GroupCard({ group }: { group: Group }) {
 function LastScore({ match }: { match: Match }) {
   const board = boardOf(match)
   const score =
-    match.config.scoring === 'sets'
+    usesSets(match.config)
       ? board.setsWon
       : [...board.closedSets, board.current].reduce((acc, s) => [acc[0] + (s[0] ?? 0), acc[1] + (s[1] ?? 0)], [0, 0])
   return (

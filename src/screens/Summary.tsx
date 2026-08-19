@@ -7,7 +7,7 @@ import { useRoster } from '../state/roster'
 import { useLive } from '../state/live'
 import { useSession } from '../state/session'
 import { teamColor, TEAM_COLORS } from '../lib/colors'
-import { boardOf, allSets } from '../lib/scoring'
+import { boardOf, allSets, usesSets } from '../lib/scoring'
 import { matchWinner } from '../lib/rank'
 import { fmtDayTime, fmtDuration } from '../lib/format'
 import { ensureCtx } from '../lib/audio'
@@ -72,7 +72,7 @@ export function Summary() {
   const loser = winner === null ? null : winner === 0 ? 1 : 0
   const [a, b] = match.teams
   const short = (i: number) => match.teams[i].name.replace(/^Time /, '')
-  const score = match.config.scoring === 'sets' ? board.setsWon : sets.at(-1) ?? [0, 0]
+  const score = usesSets(match.config) ? board.setsWon : sets.at(-1) ?? [0, 0]
   const duration = (match.finishedAt ?? Date.now()) - match.startedAt
   const playerCount = match.teams.reduce((n, t) => n + t.playerIds.length, 0)
 
@@ -135,7 +135,7 @@ export function Summary() {
             </span>
           </div>
 
-          {match.config.scoring === 'sets' && sets.length > 0 && (
+          {usesSets(match.config) && sets.length > 0 && (
             <div className="grid grid-cols-3 gap-2 mt-4">
               {sets.map((s, i) => {
                 const won0 = s[0] > s[1]

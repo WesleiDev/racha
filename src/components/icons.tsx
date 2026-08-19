@@ -250,11 +250,28 @@ export const IconOutro = (p: IconProps) => (
   </I>
 )
 
+export const IconPadel = (p: IconProps) => (
+  <I {...p} strokeWidth={1.8}>
+    <ellipse cx="11.5" cy="9.5" rx="6.5" ry="7" />
+    <path d="M9 7.5h0M14 7.5h0M9 11.5h0M14 11.5h0M11.5 9.5h0" />
+    <path d="M11.5 16.5v4M9.5 20.5h4" />
+  </I>
+)
+
+export const IconTenis = (p: IconProps) => (
+  <I {...p} strokeWidth={1.8}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M5 6.5c4 2 5.5 6.5 4.5 12M19 6.5c-4 2-5.5 6.5-4.5 12" />
+  </I>
+)
+
 export const SPORT_ICONS: Record<string, (p: IconProps) => ReactNode> = {
   volei: IconVolei,
   futsal: IconFutsal,
   basquete: IconBasquete,
   beach: IconBeach,
+  padel: IconPadel,
+  tenis: IconTenis,
   outro: IconOutro,
 }
 
