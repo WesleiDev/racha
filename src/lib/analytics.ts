@@ -17,6 +17,7 @@ export type AppEvent =
   | 'sorteio_feito'
   | 're_sorteio'
   | 'escalacao_salva'
+  | 'rodada_iniciada'
   | 'compartilhou_times'
   | 'partida_iniciada'
   | 'partida_encerrada'

@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { Screen, Header, Content, BottomBar } from '../components/layout'
 import { Button, Card, Dot, LiveDot, Modal, SectionLabel, Sheet } from '../components/ui'
 import { Avatar } from '../components/player'
 import { IconCopy, IconPlay, IconShare, IconX } from '../components/icons'
+import { MatchupPicker, matchups, playableTeams } from '../components/matchup'
 import { useRoster } from '../state/roster'
 import { useLive } from '../state/live'
 import { db } from '../data'
@@ -27,9 +28,7 @@ function ManualResult({
   onSave: (teamIdx: [number, number], sets: number[][]) => void | Promise<void>
   onCancel: () => void
 }) {
-  const pairs = session.teams.flatMap((a, i) =>
-    session.teams.slice(i + 1).map((b, k) => ({ i, j: i + 1 + k, a, b })),
-  )
+  const pairs = matchups(session.teams)
   const [pair, setPair] = useState(0)
   const porSets = usesSets(session.config)
   const [sets, setSets] = useState<string[][]>([['', '']])
@@ -190,6 +189,7 @@ function GameRow({ game, onOpen }: { game: Match; onOpen: () => void }) {
 export function Lineup() {
   const { groupId = '', matchId = '' } = useParams()
   const nav = useNavigate()
+  const { state } = useLocation()
   const { matches, load, groupId: loaded, deleteMatch, saveMatch } = useRoster()
   const startGame = useLive((s) => s.startGame)
   const liveMatch = useLive((s) => s.match)
@@ -203,6 +203,11 @@ export function Lineup() {
     if (groupId && loaded !== groupId) void load(groupId)
   }, [groupId, loaded, load])
 
+  // veio do resumo ("próximo jogo"): já abre a escolha do confronto
+  useEffect(() => {
+    if ((state as { pick?: boolean } | null)?.pick) setPicking(true)
+  }, [state])
+
   // jogos da rodada em tempo real: quem está na quadra 1 vê o placar da quadra 2
   useEffect(() => {
     if (!groupId || !matchId) return
@@ -210,14 +215,6 @@ export function Lineup() {
   }, [groupId, matchId])
 
   const session = matches.find((m) => m.id === matchId)
-
-  const lastWinnerTeam = useMemo(() => {
-    const finished = games.filter((g) => g.status === 'finished')
-    const last = finished[finished.length - 1]
-    if (!last) return null
-    const w = matchWinner(last)
-    return w === null ? null : last.teams[w]?.name ?? null
-  }, [games])
 
   if (!session) {
     return (
@@ -231,7 +228,8 @@ export function Lineup() {
   }
 
   const url = `${location.origin}/ao-vivo/${session.liveToken}`
-  const multi = session.teams.length > 2
+  const playable = playableTeams(session.teams)
+  const multi = playable.length > 2
 
   const share = async () => {
     const r = await shareLineup(session, url)
@@ -397,7 +395,7 @@ export function Lineup() {
               Voltar pro jogo em andamento
             </Button>
           ) : (
-            <Button variant="black" onClick={() => (multi ? setPicking(true) : play(0, 1))}>
+            <Button variant="black" onClick={() => (multi ? setPicking(true) : play(playable[0] ?? 0, playable[1] ?? 1))}>
               {games.length > 0 ? 'Começar outro jogo' : 'Começar partida'}
             </Button>
           )}
@@ -429,49 +427,7 @@ export function Lineup() {
 
       {/* quem entra em quadra */}
       <Sheet open={picking} onClose={() => setPicking(false)}>
-        <div className="px-5 pt-3 pb-2">
-          <div className="text-[19px] font-extrabold text-ink tracking-[-0.02em]">Quem entra em quadra?</div>
-          <div className="text-[13px] text-ter mt-0.5 mb-4">
-            {lastWinnerTeam ? `${lastWinnerTeam} venceu o último — quem ganha fica.` : 'Escolhe o confronto desta quadra.'}
-          </div>
-          <div className="flex flex-col gap-2">
-            {session.teams.flatMap((a, i) =>
-              session.teams.slice(i + 1).map((b, k) => {
-                const j = i + 1 + k
-                const jaJogou = games.some(
-                  (g) =>
-                    g.teams.length === 2 &&
-                    [g.teams[0].name, g.teams[1].name].sort().join('|') === [a.name, b.name].sort().join('|'),
-                )
-                const emQuadra = games.some(
-                  (g) =>
-                    g.status === 'live' &&
-                    [g.teams[0].name, g.teams[1]?.name].sort().join('|') === [a.name, b.name].sort().join('|'),
-                )
-                return (
-                  <button
-                    key={`${i}-${j}`}
-                    onClick={() => play(i, j)}
-                    className="flex items-center gap-3 rounded-[14px] border border-cardline bg-card px-4 py-3 text-left active:border-accent"
-                  >
-                    <Dot color={teamColor(a.colorId).hex} size={12} />
-                    <span className="text-[15px] font-bold text-ink">{a.name.replace(/^Time /, '')}</span>
-                    <span className="text-dis text-[13px]">×</span>
-                    <span className="text-[15px] font-bold text-ink flex-1">{b.name.replace(/^Time /, '')}</span>
-                    <Dot color={teamColor(b.colorId).hex} size={12} />
-                    {emQuadra ? (
-                      <span className="text-[10.5px] font-extrabold text-danger bg-danger/10 rounded-full px-2 py-1">
-                        NA QUADRA
-                      </span>
-                    ) : jaJogou ? (
-                      <span className="text-[10.5px] font-bold text-ter bg-field rounded-full px-2 py-1">já jogou</span>
-                    ) : null}
-                  </button>
-                )
-              }),
-            )}
-          </div>
-        </div>
+        <MatchupPicker teams={session.teams} games={games} onPick={play} />
       </Sheet>
 
       <Modal open={confirmDrop}>

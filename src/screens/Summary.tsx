@@ -77,6 +77,7 @@ export function Summary() {
   const playerCount = match.teams.reduce((n, t) => n + t.playerIds.length, 0)
 
   const mvpCandidates = winner !== null ? match.teams[winner].playerIds : []
+  const session = match.sessionId ? matches.find((m) => m.id === match.sessionId) ?? null : null
 
   const setMvp = (pid: string | undefined) => {
     const updated = { ...match, mvpPlayerId: pid }
@@ -89,10 +90,17 @@ export function Summary() {
     nav(`/g/${groupId}`, { replace: true })
   }
 
+  /** revanche: dentro de uma rodada entra como mais um jogo dela, pro histórico ficar junto */
   const rematch = () => {
     ensureCtx()
+    const idx = session ? match.teams.map((t) => session.teams.findIndex((x) => x.name === t.name)) : []
     live.discard()
-    live.start(groupId, group?.name ?? match.groupName, match.config, match.teams, match.bench, players)
+    if (session && idx.length === 2 && idx.every((i) => i >= 0)) {
+      const game = live.startGame(session, [idx[0], idx[1]])
+      void saveMatch(game).catch((e) => console.error('[salvar partida]', e))
+    } else {
+      live.start(groupId, group?.name ?? match.groupName, match.config, match.teams, match.bench, players)
+    }
     nav(`/g/${groupId}/placar`, { replace: true })
   }
 
@@ -199,7 +207,7 @@ export function Summary() {
             <button
               onClick={() => {
                 live.discard()
-                nav(`/g/${groupId}/escalacao/${match.sessionId}`, { replace: true })
+                nav(`/g/${groupId}/escalacao/${match.sessionId}`, { replace: true, state: { pick: true } })
               }}
               className="flex-1 h-12 rounded-[14px] bg-white/10 text-white text-[14.5px] font-bold active:bg-white/20"
             >

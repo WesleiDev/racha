@@ -33,6 +33,7 @@ import { useSession, isAdmin } from '../state/session'
 import { useLive } from '../state/live'
 import type { Player, Team, TeamSound } from '../data/types'
 import { teamColor, TEAM_COLORS } from '../lib/colors'
+import { MatchupPicker, playableTeams } from '../components/matchup'
 import { balance } from '../lib/draw'
 import { newId } from '../lib/id'
 import { buildMatch } from '../lib/match'
@@ -385,9 +386,12 @@ export function Draw() {
   const admin = isAdmin(groups.find((g) => g.id === groupId), user)
   const { config, presentIds, teams, bench, draw, redraw, movePlayer, reset } = useSetup()
   const startMatch = useLive((s) => s.start)
+  const startGame = useLive((s) => s.startGame)
   const [soundFor, setSoundFor] = useState<number | null>(null)
   const [dragging, setDragging] = useState<Player | null>(null)
   const [stuck, setStuck] = useState(false)
+  const [picking, setPicking] = useState(false)
+  const busy = useRef(false)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -405,6 +409,9 @@ export function Draw() {
   useEffect(() => {
     if (needsDraw && present.length >= 2) draw(players)
   }, [needsDraw, present.length, draw, players])
+
+  // times que dá pra escalar: o incompleto conta, o vazio não
+  const playable = useMemo(() => playableTeams(teams), [teams])
 
   const bal = teams.length > 0 ? balance(teams.map((t) => t.playerIds), present) : null
   const balText =
@@ -427,25 +434,55 @@ export function Draw() {
     if (!changed) setTimeout(() => setStuck(false), 5000)
   }
 
+  /**
+   * Grava a rodada: os times sorteados viram o container dos jogos da noite.
+   * A gravação não segura a tela — o store local já tem a rodada, e sem
+   * internet o Firestore só confirma a escrita quando a rede voltar.
+   */
+  const saveRound = () => {
+    const group = groups.find((g) => g.id === groupId)
+    const round = buildMatch(groupId, group?.name ?? 'TemJogo', config, teams, bench, present, 'scheduled')
+    // só faz sentido ter uma rodada esperando: a nova substitui a anterior
+    for (const old of matches.filter((m) => m.status === 'scheduled')) {
+      void deleteMatch(old.id).catch(() => {})
+      void db.clearLive(old.liveToken).catch(() => {})
+    }
+    void saveMatch(round).catch((e) => console.error('[salvar rodada]', e))
+    void db.publishLive(round).catch(() => {})
+    return round
+  }
+
   const begin = () => {
     ensureCtx() // gesto do usuário → áudio liberado
+    // com 3 ou 4 times o app não pode escolher sozinho quem fica de fora
+    if (playable.length > 2) {
+      setPicking(true)
+      return
+    }
     const group = groups.find((g) => g.id === groupId)
     startMatch(groupId, group?.name ?? 'TemJogo', config, teams, bench, players)
     nav(`/g/${groupId}/placar`)
   }
 
+  /** rodada de 3+ times: cria a rodada e já começa o confronto escolhido */
+  const beginRound = (i: number, j: number) => {
+    ensureCtx()
+    if (busy.current) return // toque duplo não pode criar duas rodadas
+    busy.current = true
+    const round = saveRound()
+    const game = startGame(round, [i, j])
+    void saveMatch(game).catch((e) => console.error('[salvar partida]', e))
+    track('rodada_iniciada', { times: teams.length, jogadores: present.length })
+    setPicking(false)
+    reset()
+    nav(`/g/${groupId}/placar`, { replace: true })
+  }
+
   /** guarda a escalação sem começar o jogo — dá pra mandar no grupo e jogar depois */
-  const saveLineup = async () => {
-    const group = groups.find((g) => g.id === groupId)
-    const present = players.filter((p) => presentIds.includes(p.id))
-    const lineup = buildMatch(groupId, group?.name ?? 'TemJogo', config, teams, bench, present, 'scheduled')
-    // só faz sentido ter uma escalação esperando: a nova substitui a anterior
-    for (const old of matches.filter((m) => m.status === 'scheduled')) {
-      await deleteMatch(old.id).catch(() => {})
-      void db.clearLive(old.liveToken).catch(() => {})
-    }
-    await saveMatch(lineup)
-    void db.publishLive(lineup).catch(() => {})
+  const saveLineup = () => {
+    if (busy.current) return
+    busy.current = true
+    const lineup = saveRound()
     track('escalacao_salva', { times: teams.length, jogadores: present.length })
     reset()
     nav(`/g/${groupId}/escalacao/${lineup.id}`, { replace: true })
@@ -503,18 +540,23 @@ export function Draw() {
               <IconSwap size={15} /> Sortear de novo
             </button>
             <button
-              onClick={() => void saveLineup()}
-              disabled={teams.length < 2}
+              onClick={saveLineup}
+              disabled={playable.length < 2}
               className="flex-1 h-[46px] rounded-[13px] border border-strong text-ink text-[13.5px] font-bold flex items-center justify-center gap-1.5 active:bg-field disabled:opacity-40"
             >
               <IconShare size={14} /> Salvar pra depois
             </button>
           </div>
-          <Button variant="black" onClick={begin} disabled={teams.length < 2}>
-            Começar partida agora
+          <Button variant="black" onClick={begin} disabled={playable.length < 2}>
+            {playable.length > 2 ? 'Escolher quem joga agora' : 'Começar partida agora'}
           </Button>
         </div>
       </BottomBar>
+
+      {/* 3+ times: o app não decide sozinho quem fica de fora */}
+      <Sheet open={picking} onClose={() => setPicking(false)}>
+        <MatchupPicker teams={teams} onPick={beginRound} />
+      </Sheet>
 
       <SoundSheet teamIndex={soundFor} onClose={() => setSoundFor(null)} admin={admin} />
     </Screen>
